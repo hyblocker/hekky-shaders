@@ -1,0 +1,22 @@
+﻿// Converts a normal map from DX to GL and back
+// Basically invert G
+#pragma kernel CSNormalConvertMain
+
+float Width;
+float Height;
+Texture2D<float4> NormalRaw;
+
+RWTexture2D<float4> Result;
+
+SamplerState linearClampSampler;
+SamplerState pointClampSampler;
+
+[numthreads(8,8,1)]
+void CSNormalConvertMain (uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = float2(id.x / Width, id.y / Height);
+    float4 sample = NormalRaw.SampleLevel(pointClampSampler, uv, 0);
+    sample.g = 1.f - sample.g;
+
+    Result[id.xy] = sample;
+}

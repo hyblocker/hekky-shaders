@@ -1,0 +1,9 @@
+#ifndef HEKKY_PBR_UBER_LIGHTING_LTCGI
+#define HEKKY_PBR_UBER_LIGHTING_LTCGI
+
+#if LTCGI_ENABLED
+    #include "Assets/_pi_/_LTCGI/Shaders/LTCGI.cginc"
+#endif // LTCGI_ENABLED
+
+
+#endif // HEKKY_PBR_UBER_LIGHTING_LTCGI

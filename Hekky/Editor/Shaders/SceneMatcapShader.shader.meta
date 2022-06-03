@@ -1,0 +1,10 @@
+fileFormatVersion: 2
+guid: 5ce039773daba1a4ea537251630739c5
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures:
+  - _SceneTexMatcap: {fileID: 2800000, guid: df2141365d9789444b92f01394eef35f, type: 3}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
