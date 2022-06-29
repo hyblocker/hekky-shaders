@@ -1,9 +1,6 @@
-﻿namespace Hekky
-{
-    public static partial class HGUI
-    {
-        public enum BlendMode
-        {
+﻿namespace Hekky {
+    public static partial class HGUI {
+        public enum BlendMode {
             Opaque,
             Cutout,
             Fade,
@@ -11,8 +8,7 @@
         }
     }
 
-    public enum AudioLinkChannels
-    {
+    public enum AudioLinkChannels {
         Bass = 0,
         LowMid = 1,
         HighMid = 2,

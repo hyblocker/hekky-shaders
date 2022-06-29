@@ -1,19 +1,15 @@
 ﻿using System;
 using UnityEditor;
-using UnityEngine;
 
-namespace Hekky
-{
+namespace Hekky {
     // Constants
-    public static partial class HGUI
-    {
+    public static partial class HGUI {
         public static MaterialProperty[] materialPropsEmpty = { };
 
         /// <summary>
         /// Standard AudioLink Debug Layout struct
         /// </summary>
-        public struct AudioLinkDebugProps
-        {
+        public struct AudioLinkDebugProps {
             public AudioLinkDebugProps(MaterialProperty[] props) {
                 DebugEnabled = FindProperty("_AudioLinkDebug", props);
 
@@ -31,15 +27,15 @@ namespace Hekky
             string propertyName,
             MaterialProperty[] properties,
             bool propertyIsMandatory = true) {
-            for (int index = 0; index < properties.Length; ++index) {
-                if (properties[index] != null && properties[index].name == propertyName)
+            for ( int index = 0; index < properties.Length; ++index ) {
+                if ( properties[index] != null && properties[index].name == propertyName )
                     return properties[index];
             }
 
-            if (propertyIsMandatory)
+            if ( propertyIsMandatory )
                 throw new ArgumentException("Could not find MaterialProperty: '" + propertyName +
-                                            "', Num properties: " + (object) properties.Length);
-            return (MaterialProperty) null;
+                                            "', Num properties: " + ( object ) properties.Length);
+            return ( MaterialProperty ) null;
         }
     }
 }

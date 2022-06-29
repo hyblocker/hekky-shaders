@@ -96,8 +96,8 @@ struct MaterialData
     float roughness;
     float reflectance;
     float ambientOcclusion;
-    float3 normal;      // Tangent space normal
-    float3 tangent;     // Tangent map
+    half3 normal;      // Tangent space normal
+    half3 tangent;     // Tangent map
     float aniso;        // Anisotropy
     float anisoAngle;   // Anisotropic Angle
     SubsurfaceData subsurface;

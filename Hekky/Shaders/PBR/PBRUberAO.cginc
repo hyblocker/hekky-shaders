@@ -9,8 +9,12 @@ inline float SpecularAO_Lagarde(const float NdotV, const float visibility, const
 
 inline float3 gtaoMultiBounce(float visibility, float3 term)
 {
-    // TODO: Multibounce AO
-    return 0;
+    // Jimenez et al. 2016, "Practical Realtime Strategies for Accurate Indirect Occlusion"
+    const float3 a =  2.0404 * term - 0.3324;
+    const float3 b = -4.7951 * term + 0.6417;
+    const float3 c =  2.7552 * term + 0.6903;
+
+    return max(visibility, ((visibility * a + b) * visibility + c) * visibility);
 }
 
 inline float singleBounceAO(const float visibility)
@@ -20,12 +24,12 @@ inline float singleBounceAO(const float visibility)
 
 inline float multiBounceAO(const float visibility, const float3 albedo)
 {
-    return visibility;
+    return gtaoMultiBounce(visibility, albedo);;
 }
 
 inline float multiBounceSpecularAO(const float visibility, const float3 f0)
 {
-    return visibility;
+    return gtaoMultiBounce(visibility, f0);;
 }
 
 inline float computeSpecularAO(const float NdotV, const float AO, const float roughness)
@@ -35,7 +39,7 @@ inline float computeSpecularAO(const float NdotV, const float AO, const float ro
 
 inline float Occlusion(const float2 uv)
 {
-    const half occlusion = HEKKY_SAMPLE_TEX2D(_OcclusionMap, uv);
+    const half occlusion = HEKKY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, uv, sampler_MainTex);
     return LerpOneTo(occlusion, _OcclusionStrength);
 }
 

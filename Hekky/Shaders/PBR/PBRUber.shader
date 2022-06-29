@@ -4,8 +4,8 @@
     {
         // ==================== CORE ====================
         
-        [HideInInspector]_Manifest("__;title('Hekky PBR Uber')", Float) = 0
-        [HideInInspector]_Version("__;version(0.08a);", Float) = 1
+        [HideInInspector]_Manifest("__;title('Hekky PBR Uber');docsURL('https://docs.hyblocker.dev/en/shaders/hekky-pbr/reference')", Float) = 0
+        [HideInInspector]_Version("__;version(1.1);", Float) = 1
         
         _Header("__;doHeader;spacing;spacing;", Float) = 0
         _MiscView("__;doTextureFixCollection;", Float) = 0
@@ -17,7 +17,7 @@
         
         _FoldoutMainBegin("Main; beginFoldout", Float) = 0.0
         
-            _Color ("Color; hide; showAlong(_MainTex)", Color) = (0.8039216,0.8039216,0.8039216)
+            _Color ("Color; hide; showAlong(_MainTex)", Color) = (1,1,1)
             _MainTex ("Texture; doScaleOffset", 2D) = "white" {}
 
             [Gamma]_Metallic ("Metal; hide; showAlong(_MetallicGlossMap)", Range(0.0, 1.0)) = 0
@@ -80,6 +80,13 @@
 
             _FoldoutSpecularEnd("__; endFoldout", Float) = 0.0
         
+            // ==================== REFLECTIONS ====================
+
+            _FoldoutReflectionsBegin("Reflections; beginFoldout", Float) = 0.0
+            
+                [KeywordEnum(Default, Spherical Projection, Box Projection)]_ReflectionsForcedMode("Force reflections mode", Float) = 0
+
+            _FoldoutReflectionsEnd("__; endFoldout", Float) = 0.0
         
             // ==================== EMISSION ====================
 
@@ -92,9 +99,9 @@
                 _FoldoutEmissionAudioLinkBegin("AudioLink; beginFoldout", Float) = 0.0
             
                     [Enum(Hekky.AudioLinkChannels)] _EmissionAudioLinkMultiplyChannel("Multiply Channel; hideIfNot(_AudioLink); requireAudioLink", Float) = 0.0
-                    _EmissionAudioLinkMultiplyRange ("Range; slider(X, 0, 1, Min Multiply Emission); slider(Y, 0, 1, Max Multiply Emission); hideIfNot(_AudioLink); requireAudioLink", Vector) = (0,1,0,0)
+                    _EmissionAudioLinkMultiplyRange ("Range; slider(X, 0, 10, Min Multiply Emission); slider(Y, 0, 10, Max Multiply Emission); hideIfNot(_AudioLink); requireAudioLink", Vector) = (0,1,0,0)
                     [Enum(Hekky.AudioLinkChannels)] _EmissionAudioLinkAddChannel("Add Channel; hideIfNot(_AudioLink); requireAudioLink", Float) = 0.0
-                    _EmissionAudioLinkAddRange ("Range; slider(X, 0, 1, Min Add Emission); slider(Y, 0, 1, Max Add Emission); hideIfNot(_AudioLink); requireAudioLink", Vector) = (0,0,0,0)
+                    _EmissionAudioLinkAddRange ("Range; slider(X, 0, 50, Min Add Emission); slider(Y, 0, 50, Max Add Emission); hideIfNot(_AudioLink); requireAudioLink", Vector) = (0,0,0,0)
             
                 _FoldoutEmissionAudioLinkEnd("__; endFoldout", Float) = 0.0
 
@@ -160,7 +167,7 @@
                 _RNM1("RNM1; requireBakery; disable", 2D) = "black" {}
                 _RNM2("RNM2; requireBakery; disable", 2D) = "black" {}
 
-            [ToggleUI(_LTCGI)] _LTCGI ("LTCGI; requireLTCGI", Int) = 0
+            [Toggle(_LTCGI)] _LTCGI ("LTCGI; requireLTCGI", Int) = 0
             [Toggle(_AUDIOLINK)] _AudioLink ("AudioLink; requireAudioLink", Int) = 0
             
             [NonModifiableTextureData][NoScaleOffset][HideInInspector] _DFG("DFG", 2D) = "white" {}
@@ -212,6 +219,7 @@
             #pragma shader_feature_local _ _BAKERY_RNM _BAKERY_SH
             #pragma shader_feature_local _LTCGI
             #pragma shader_feature_local _AUDIOLINK
+            #pragma shader_feature_local _REFLECTIONSFORCEDMODE_DEFAULT _REFLECTIONSFORCEDMODE_SPHERICAL_PROJECTION _REFLECTIONSFORCEDMODE_BOX_PROJECTION
             
             #pragma multi_compile_fwdbase
             #pragma multi_compile_fog

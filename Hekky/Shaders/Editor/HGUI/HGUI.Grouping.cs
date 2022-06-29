@@ -2,10 +2,8 @@ using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
 
-namespace Hekky
-{
-    public static partial class HGUI
-    {
+namespace Hekky {
+    public static partial class HGUI {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void BeginGroup() {
             GUILayout.Space(2);

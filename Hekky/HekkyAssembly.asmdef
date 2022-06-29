@@ -1,7 +1,9 @@
 {
     "name": "HekkyAssembly",
     "references": [
-        "GUID:d60799ab2a985554ea1a39cd38695018"
+        "GUID:d60799ab2a985554ea1a39cd38695018",
+        "GUID:f16c18940d95fd44a911829bf5e37070",
+        "GUID:290dd5870d0ead646bcb6ea5c6a60af5"
     ],
     "includePlatforms": [
         "Editor"

@@ -7,17 +7,21 @@ MaterialData MaterialSetup(const v2f i)
 {
     MaterialData data;
 
-    float4 albedo = HEKKY_SAMPLE_TEX2D(_MainTex, i.uv.xy);
+    float4 albedo = HEKKY_SAMPLE_TEX2D(_MainTex, i.uv.xy) * 0.8039216f;
     data.baseColor = albedo.rgb * _Color;
     data.alpha = albedo.a * _Color.a;
 
     // Default tangent normal
-    data.normal = UnpackScaleNormal(HEKKY_SAMPLE_TEX2D(_BumpMap, i.uv.xy), _BumpScale);
+    #ifdef _NORMALMAP
+        data.normal = UnpackScaleNormal(HEKKY_SAMPLE_TEX2D_SAMPLER(_BumpMap, i.uv.xy, sampler_MainTex), _BumpScale);
+    #else
+        data.normal = half3(0,0, _BumpScale);
+    #endif
 
     // TODO: Fetch metalness, either from MetalTex.r or MetallicPackedTex[MetalChannel]
     // Probably should have some #define for sampling from either a normal texture or a packed texture
-    data.metallic = _Metallic * HEKKY_SAMPLE_TEX2D(_MetallicGlossMap, i.uv.xy).r;
-    data.roughness = _Glossiness * HEKKY_SAMPLE_TEX2D(_SpecGlossMap, i.uv.xy).r;
+    data.metallic = _Metallic * HEKKY_SAMPLE_TEX2D_SAMPLER(_MetallicGlossMap, i.uv.xy, sampler_MainTex).r;
+    data.roughness = _Glossiness * HEKKY_SAMPLE_TEX2D_SAMPLER(_SpecGlossMap, i.uv.xy, sampler_MainTex).r;
     data.roughness = (_InvertGlossiness - 1) * -data.roughness + _InvertGlossiness -_InvertGlossiness * data.roughness;
     data.reflectance = 0.5;
 
@@ -26,7 +30,7 @@ MaterialData MaterialSetup(const v2f i)
     // Aniso
     // TODO: Move to sampling
     // float4 anisoMap = HEKKY_SAMPLE_TEX2D(_AnisoMap, i.uv.xy);
-    float4 anisoMap = SampleTexture2DEdgePreserving( TEXTURE2D_PARAM( _AnisoMap, sampler_AnisoMap ), i.uv.xy, _AnisoMap_TexelSize );
+    float4 anisoMap = SampleTexture2DEdgePreserving( TEXTURE2D_PARAM( _AnisoMap, sampler_MainTex ), i.uv.xy, _AnisoMap_TexelSize );
     
     data.aniso = anisoMap.r * _AnisoStrength;
     data.anisoAngle = anisoMap.g + _AnisoAngleOffset;
@@ -35,7 +39,7 @@ MaterialData MaterialSetup(const v2f i)
     data.subsurface.color = (float3) 0;
     data.subsurface.thickness = 1.0;
     
-    data.emission.color = _EmissionColor.rgb * HEKKY_SAMPLE_TEX2D(_EmissionMap, i.uv.xy);
+    data.emission.color = _EmissionColor.rgb * HEKKY_SAMPLE_TEX2D_SAMPLER(_EmissionMap, i.uv.xy, sampler_MainTex);
     data.emission.intensity = _EmissionIntensity;
 
     #if defined(_AUDIOLINK)
@@ -76,33 +80,38 @@ ShadingData SetupShadingData(const v2f i)
 {
     ShadingData shadingData = (ShadingData) 0;
 
+    shadingData.geometricNormal = normalize(i.normal.xyz);
+    shadingData.geometricTangent = normalize(i.tangent.xyz);
+    shadingData.binormal = normalize(i.binormal.xyz);
+    
     // Extract TBN matrix
     float3x3 tangentToWorld;
-    tangentToWorld[0] = i.tangent.xyz;
-    tangentToWorld[1] = i.binormal.xyz;
-    tangentToWorld[2] = i.normal.xyz;
+    // tangentToWorld[0] = i.tangent.xyz;
+    // tangentToWorld[1] = i.binormal.xyz;
+    // tangentToWorld[2] = i.normal.xyz;
+    
+    tangentToWorld[0] = shadingData.geometricTangent;
+    tangentToWorld[1] = shadingData.binormal;
+    tangentToWorld[2] = shadingData.geometricNormal;
     shadingData.tangentToWorld = transpose(tangentToWorld);
 
     shadingData.normalizedViewportCoord = i.pos.xy * (0.5 / i.pos.w) + 0.5;
-    shadingData.geometricNormal = normalize(i.normal.xyz);
     shadingData.normal = shadingData.geometricNormal;
-    shadingData.geometricTangent = normalize(i.tangent.xyz);
     shadingData.tangent = shadingData.geometricTangent;
-    shadingData.binormal = normalize(i.binormal.xyz);
     shadingData.position = i.worldPos;
     shadingData.view = -normalizePerPixelNormal(i.eyeVec);
     // shadingData.reflected = reflect(-shadingData.view, shadingData.normal);
 
-    fixed atten = 1;
-    
-    UNITY_BRANCH
-    if (LIGHTING_SHADOWS_ENABLED)
-    {
-        atten = UNITY_SHADOW_ATTENUATION(i, shadingData.position);
-    }
+    fixed atten  = UNITY_SHADOW_ATTENUATION(i, shadingData.position);
+    // Fix screen space shadow artifacts from MSAA
+    #if defined(SHADOWS_SCREEN) && defined(UNITY_PASS_FORWARDBASE)
+        atten = SSDirectionalShadowAA(i._ShadowCoord, atten);
+    #endif
+    // if (LIGHTING_SHADOWS_ENABLED == 0) atten = 1.f;
+    atten = LIGHTING_SHADOWS_ENABLED * atten + (1.f - LIGHTING_SHADOWS_ENABLED);
 
     #if HAS_LIGHTMAP
-    GetBakedAttenuation(atten, i.ambientOrLightmapUV.xy, shadingData.position);
+        GetBakedAttenuation(atten, i.ambientOrLightmapUV.xy, shadingData.position);
     #endif
     
     shadingData.attenuation = atten;
@@ -123,18 +132,15 @@ ShadingData SetupShadingData(const v2f i)
         matcapUV.y = remap( 0, 1, _MatcapBorder, 1.f - _MatcapBorder, matcapUV.y );
         shadingData.matcapColor = HEKKY_SAMPLE_TEX2D(_MatcapTex, matcapUV).rgb;
         
-        shadingData.matcapBlend = HEKKY_SAMPLE_TEX2D(_MatcapMask, i.uv).r * _DoMatcap;
+        shadingData.matcapBlend = HEKKY_SAMPLE_TEX2D_SAMPLER(_MatcapMask, i.uv, sampler_MainTex).r * _DoMatcap;
     }
     
     return shadingData;
 }
 
-// A collection of handy #defines to have "inline functions" for gathering data from texture maps
-#define CALC_NORMAL(material, shading) normalize(mul(shading.tangentToWorld, material.normal))
-
 void prepareMaterial(const MaterialData material, inout ShadingData shading)
 {
-    shading.normal = CALC_NORMAL(material, shading);
+    shading.normal = normalize(mul(shading.tangentToWorld, material.normal));
 
     UNITY_BRANCH
     if (_SpecularMode == 1 && abs(material.aniso) > 0.1)

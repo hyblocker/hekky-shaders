@@ -1,17 +1,14 @@
 // A script to make interfacing with Unity's EditorGUI class comfier by trying to emulate the DearImGUI APIs
 // by Hekky#6869
 
-using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEngine;
 
-namespace Hekky
-{
+namespace Hekky {
     // Core stuff
-    public static partial class HGUI
-    {
+    public static partial class HGUI {
         private static Stack<int> m_idStack = new Stack<int>();
         private static Dictionary<int, bool> m_toggles = new Dictionary<int, bool>();
 

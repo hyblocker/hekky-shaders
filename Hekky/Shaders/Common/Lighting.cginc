@@ -68,4 +68,67 @@ inline void GetBakedAttenuation(inout float atten, float2 lightmapUV, float3 wor
     #endif
 }
 
+// From bgolus: https://forum.unity.com/threads/fixing-screen-space-directional-shadows-and-anti-aliasing.379902/
+// Used to fix artifacts on multisampled pixels when using MSAA with screenspace shadows
+#if defined(SHADOWS_SCREEN) && defined(UNITY_PASS_FORWARDBASE)
+
+#ifndef HAS_DEPTH_TEXTURE
+    #define HAS_DEPTH_TEXTURE
+    UNITY_DECLARE_DEPTH_TEXTURE( _CameraDepthTexture );
+    float4 _CameraDepthTexture_TexelSize;
+#endif
+
+float SSDirectionalShadowAA(float4 _ShadowCoord, float atten)
+{
+    float a = atten;
+    float2 screenUV = _ShadowCoord.xy / _ShadowCoord.w;
+    float shadow = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_ShadowMapTexture, screenUV);
+
+    if (frac(_Time.x) > 0.5)
+        a = shadow;
+
+    float fragDepth = _ShadowCoord.z / _ShadowCoord.w;
+    float depth_raw = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV);
+
+    float depthDiff = abs(fragDepth - depth_raw);
+    float diffTest = 1.0 / 100000.0;
+
+    if (depthDiff > diffTest)
+    {
+        float2 texelSize = _CameraDepthTexture_TexelSize.xy;
+        float4 offsetDepths = 0;
+
+        float2 uvOffsets[4] = {
+            float2(1.0, 0.0) * texelSize,
+            float2(-1.0, 0.0) * texelSize,
+            float2(0.0, 1.0) * texelSize,
+            float2(0.0, -1.0) * texelSize
+        };
+
+        offsetDepths.x = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV + uvOffsets[0]).r;
+        offsetDepths.y = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV + uvOffsets[1]).r;
+        offsetDepths.z = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV + uvOffsets[2]).r;
+        offsetDepths.w = SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, screenUV + uvOffsets[3]).r;
+
+        float4 offsetDiffs = abs(fragDepth - offsetDepths);
+
+        float diffs[4] = {offsetDiffs.x, offsetDiffs.y, offsetDiffs.z, offsetDiffs.w};
+
+        int lowest = 4;
+        float tempDiff = depthDiff;
+        for (int i = 0; i < 4; i++)
+        {
+            if (diffs[i] < tempDiff)
+            {
+                tempDiff = diffs[i];
+                lowest = i;
+            }
+        }
+
+        a = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_ShadowMapTexture, screenUV + uvOffsets[lowest]).r;
+    }
+    return a;
+}
+#endif
+
 #endif // HEKKY_LIGHTING

@@ -1,14 +1,12 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Hekky
-{
+namespace Hekky {
     // Common controls specific to shader editors
-    public static partial class HGUI
-    {
+    public static partial class HGUI {
         public static void AudioLinkDebug(MaterialEditor materialEditor, AudioLinkDebugProps alDebugProps) {
             HGUI.PushID("__al_debug");
-            if (HGUI.CollapsingHeader("Debug")) {
+            if ( HGUI.CollapsingHeader("Debug") ) {
                 HGUI.Spacing();
                 bool alDebugModeEnabled = HGUI.Toggle(alDebugProps.DebugEnabled, "Enable Debug Mode");
                 EditorGUI.BeginDisabledGroup(!alDebugModeEnabled);
@@ -23,7 +21,7 @@ namespace Hekky
         }
 
         public static void SetKeyword(Material material, string keyword, bool state) {
-            if (state)
+            if ( state )
                 material.EnableKeyword(keyword);
             else
                 material.DisableKeyword(keyword);

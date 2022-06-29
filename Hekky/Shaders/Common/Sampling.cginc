@@ -23,6 +23,13 @@
 #define HEKKY_SAMPLE_TEX2DARR_SAMPLER(tex, coord, sampler)                          tex.Sample(sampler, coord)
 #define HEKKY_SAMPLE_TEX2DARR_SAMPLER_LOD(tex, coord, sampler, lod)                 tex.Sample(sampler, coord, lod)
 
+#if defined(SHADER_API_D3D11) || defined(SHADER_API_GLCORE)
+#define HEKKY_LOD_TEX2D(tex, coord)                                                 tex.CalculateLevelOfDetail (sampler##tex,coord)
+#else
+// Just match the type i.e. define as a float value
+#define HEKKY_LOD_TEX2D(tex,coord) float(0)
+#endif
+
 // Screenspace textures should be treated differently, and always sampled from the highest mipmap level
 #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
 

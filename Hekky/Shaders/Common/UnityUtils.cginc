@@ -99,6 +99,11 @@ inline bool IsOrtho()
     return unity_OrthoParams.w == 1 || UNITY_MATRIX_P[3][3] == 1;
 }
 
+bool isReflectionProbe()
+{
+    return UNITY_MATRIX_P[0][0] == 1 && unity_CameraProjection._m11 == 1;
+}
+
 // A pair of functions to either take per-vertex normals or per-pixel normals
 inline half3 normalizePerVertexNormal (float3 n) // takes float to avoid overflow
 {

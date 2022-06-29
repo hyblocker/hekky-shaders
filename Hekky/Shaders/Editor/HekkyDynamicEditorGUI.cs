@@ -6,13 +6,11 @@ using UnityEditor;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 
-namespace Hekky
-{
+namespace Hekky {
     /// <summary>
     /// A shader GUI conforming to the spec outlined in ShaderEditorSpec.md
     /// </summary>
-    public class HekkyDynamicEditorGUI : ShaderGUI
-    {
+    public class HekkyDynamicEditorGUI : ShaderGUI {
         private const char PROPERTY_SEPARATOR = ';';
 
         #region External Module Detection
@@ -57,7 +55,7 @@ namespace Hekky
 
         // private Dictionary<string, MaterialProperty> propertyMap;
         private HekkyMaterialProperty[] hekkyProps;
-        private string version, title;
+        private string version, title, docsURL;
         private MaterialProperty BlendModeUnityProp;
         private MaterialEditor materialEditor;
         private Material material;
@@ -73,7 +71,7 @@ namespace Hekky
 
             propertyMap = RawPropsToLut(properties);
             version = "";
-            material = (Material) materialEditor.target;
+            material = ( Material ) materialEditor.target;
             title = material.shader.name;
             this.materialEditor = materialEditor;
             foldoutStack.Clear();
@@ -83,26 +81,28 @@ namespace Hekky
             hekkyProps = ParsePropertiesToFoldout(properties).materialProperties;
             BlendModeUnityProp = FindProperty("_Mode", properties, false);
 
-            for (int i = 0; i < hekkyProps.Length; i++) {
-                if (hekkyProps[i].properties == null)
+            for ( int i = 0; i < hekkyProps.Length; i++ ) {
+                if ( hekkyProps[i].properties == null )
                     Debug.LogError(
                         $"Prop {hekkyProps[i].displayName} {hekkyProps[i].unityInternalProperty.displayName} was null!");
-                for (int j = 0; j < hekkyProps[i].properties.Length; j++) {
+                for ( int j = 0; j < hekkyProps[i].properties.Length; j++ ) {
                     // Shorthands
                     var currentProp = hekkyProps[i];
                     var currentToken = currentProp.properties[j];
 
                     try {
-                        switch (hekkyProps[i].properties[j].propertyType) {
+                        switch ( hekkyProps[i].properties[j].propertyType ) {
                             case HekkyShaderProperty.Title:
                                 title = currentToken.values[0] as string;
+                                break;
+                            case HekkyShaderProperty.DocsURL:
+                                docsURL = currentToken.values[0] as string;
                                 break;
                             case HekkyShaderProperty.Version:
                                 version = currentToken.values[0] as string;
                                 break;
                         }
-                    }
-                    catch (Exception err) {
+                    } catch ( Exception err ) {
                         Debug.LogError(
                             $"Failed to parse property \"{currentToken.propertyRaw}\" in {currentProp.unityInternalProperty.name}!");
                         Debug.LogException(err);
@@ -144,32 +144,32 @@ namespace Hekky
         #region Render GUI
 
         private void DoGroupedWarningsContainer() {
-            if (incorrectlyConfiguredTextureCount.Count > 0) {
-                if (HGUI.TextureImportWarningBox(incorrectlyConfiguredTextureCount.Count == 1
+            if ( incorrectlyConfiguredTextureCount.Count > 0 ) {
+                if ( HGUI.TextureImportWarningBox(incorrectlyConfiguredTextureCount.Count == 1
                     ? "There is a texture with incorrect import settings on this material."
                     : "There are multiple textures with incorrect import settings on this material."
-                )) {
-                    for (int i = 0; i < incorrectlyConfiguredTextureCount.Count; i++) {
+                ) ) {
+                    for ( int i = 0; i < incorrectlyConfiguredTextureCount.Count; i++ ) {
                         var prop = incorrectlyConfiguredTextureCount[i];
                         string texPath = AssetDatabase.GetAssetPath(prop.textureValue);
                         var importer = AssetImporter.GetAtPath(texPath) as TextureImporter;
-                        
+
                         // if the texture type is NORMAL MAP
-                        if (HekkyUtil.TestBitwiseFlag(prop.flags, MaterialProperty.PropFlags.Normal)) {
-                            if (importer != null && importer.textureType != TextureImporterType.NormalMap) {
+                        if ( HekkyUtil.TestBitwiseFlag(prop.flags, MaterialProperty.PropFlags.Normal) ) {
+                            if ( importer != null && importer.textureType != TextureImporterType.NormalMap ) {
                                 importer.textureType = TextureImporterType.NormalMap;
                                 importer.SaveAndReimport();
                             }
                         } else {
                             // Assume it's linear
-                            if (importer != null && importer.sRGBTexture) {
+                            if ( importer != null && importer.sRGBTexture ) {
                                 importer.sRGBTexture = false;
                                 importer.SaveAndReimport();
                             }
                         }
                     }
                 }
-                
+
                 // Small amount of padding to make the UI look clean
                 HGUI.Spacing();
             }
@@ -185,36 +185,35 @@ namespace Hekky
             DoSocialButtons();
         }
 
-        private void DoSocialButtons()
-        {
+        private void DoSocialButtons() {
             HGUI.Spacing();
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
-            
-            if (GUILayout.Button(new GUIContent(iconPatreon, "Patreon"), HGUI.IconButton))
-            {
+
+            if ( GUILayout.Button(new GUIContent(iconPatreon, "Patreon"), HGUI.IconButton) ) {
                 Process.Start(HekkyConstants.PatreonURL);
             }
-            if (GUILayout.Button(new GUIContent(iconDocs, "Documentation"), HGUI.IconButton))
-            {
-                Process.Start(HekkyConstants.DocumentationURL);
+
+            if ( GUILayout.Button(new GUIContent(iconDocs, "Documentation"), HGUI.IconButton) ) {
+                // Process.Start(HekkyConstants.DocumentationURL);
+                Process.Start(docsURL);
             }
-            if (GUILayout.Button(new GUIContent(iconDiscord, "Discord Server"), HGUI.IconButton))
-            {
+
+            if ( GUILayout.Button(new GUIContent(iconDiscord, "Discord Server"), HGUI.IconButton) ) {
                 Process.Start(HekkyConstants.DiscordURL);
             }
-            
+
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
         }
-        
+
         private void DoBlendMode(MaterialProperty blendModeProp, string displayName) {
             EditorGUI.BeginChangeCheck();
             bool blendModeChanged = BlendModePopup(blendModeProp, displayName);
-            if (EditorGUI.EndChangeCheck()) {
-                foreach (var obj in blendModeProp.targets) {
-                    var currMaterial = (Material) obj;
-                    SetBlendMode(currMaterial, (HGUI.BlendMode) currMaterial.GetFloat(Mode), blendModeChanged);
+            if ( EditorGUI.EndChangeCheck() ) {
+                foreach ( var obj in blendModeProp.targets ) {
+                    var currMaterial = ( Material ) obj;
+                    SetBlendMode(currMaterial, ( HGUI.BlendMode ) currMaterial.GetFloat(Mode), blendModeChanged);
                 }
             }
 
@@ -233,18 +232,18 @@ namespace Hekky
             string sRGBWarning = "This texture is marked as sRGB, but should be linear";
             string texPath = AssetDatabase.GetAssetPath(prop.textureValue);
             var importer = AssetImporter.GetAtPath(texPath) as TextureImporter;
-            if (importer != null && importer.sRGBTexture && HGUI.TextureImportWarningBox(sRGBWarning)) {
+            if ( importer != null && importer.sRGBTexture && HGUI.TextureImportWarningBox(sRGBWarning) ) {
                 importer.sRGBTexture = false;
                 importer.SaveAndReimport();
             }
         }
 
         private bool EnsureFoldoutIsRendered() {
-            if (foldoutStack.Count > 0) {
+            if ( foldoutStack.Count > 0 ) {
                 var foldout = foldoutStack.Peek();
                 bool doFoldout = HGUI.CollapsingHeader(foldout.displayName);
                 foldout.unityInternalProperty.floatValue = doFoldout ? 1 : 0;
-                if (foldout.unityInternalProperty.floatValue == 1.0f) {
+                if ( foldout.unityInternalProperty.floatValue == 1.0f ) {
                     foldoutStack.Pop();
                     HGUI.BeginGroup();
                     foldoutsToClose++;
@@ -258,9 +257,9 @@ namespace Hekky
 
         private bool DrawPropInternal(HekkyMaterialProperty prop) {
             bool ignoreProp = HekkyUtil.TestBitwiseFlag(prop.unityInternalProperty.flags,
-                                                        MaterialProperty.PropFlags.HideInInspector);
+                MaterialProperty.PropFlags.HideInInspector);
             ignoreProp |= HekkyUtil.TestBitwiseFlag(prop.unityInternalProperty.flags,
-                                                    MaterialProperty.PropFlags.NonModifiableTextureData);
+                MaterialProperty.PropFlags.NonModifiableTextureData);
 
             bool disabled = false;
             bool doUVScaleOffsetBlock = false;
@@ -269,24 +268,24 @@ namespace Hekky
             // Range slider
             byte sliderCount = 0;
             byte[] sliderComponent = new byte[4];
-            string[] sliderNames = {"","","",""};
+            string[] sliderNames = {"", "", "", ""};
             Vector2[] sliderRange = new Vector2[4];
 
-            for (int i = 0; i < prop.properties.Length; i++) {
-                switch (prop.properties[i].propertyType) {
+            for ( int i = 0; i < prop.properties.Length; i++ ) {
+                switch ( prop.properties[i].propertyType ) {
                     case HekkyShaderProperty.Hide:
                         ignoreProp = true;
                         break;
                     case HekkyShaderProperty.HideIfNot:
                         // Check args, and hide if not true
-                        if (!(Math.Abs(propertyMap[(string) prop.properties[i].values[0]].property.floatValue -
-                                       float.Parse((string) prop.properties[i].values[1])) < 0.01f))
+                        if ( !( Math.Abs(propertyMap[( string ) prop.properties[i].values[0]].property.floatValue -
+                                         float.Parse(( string ) prop.properties[i].values[1])) < 0.01f ) )
                             ignoreProp = true;
                         break;
                     case HekkyShaderProperty.DisableIfNot:
                         // Check args, and disable if not true
-                        if (!(Math.Abs(propertyMap[(string) prop.properties[i].values[0]].property.floatValue -
-                                       float.Parse((string) prop.properties[i].values[1])) < 0.01f))
+                        if ( !( Math.Abs(propertyMap[( string ) prop.properties[i].values[0]].property.floatValue -
+                                         float.Parse(( string ) prop.properties[i].values[1])) < 0.01f ) )
                             disabled = true;
                         break;
                     case HekkyShaderProperty.Disable:
@@ -302,7 +301,7 @@ namespace Hekky
 
                         // Convert X,Y,Z,W into an index
                         byte knownComponentIndex = 255;
-                        switch (((string) prop.properties[i].values[0]).ToLowerInvariant()) {
+                        switch ( ( ( string ) prop.properties[i].values[0] ).ToLowerInvariant() ) {
                             case "x":
                                 knownComponentIndex = 0;
                                 break;
@@ -317,8 +316,8 @@ namespace Hekky
                                 break;
                         }
 
-                        if (knownComponentIndex == 255) {
-                            Debug.LogError($"Unknown vector component {((string) prop.properties[i].values[0])}!");
+                        if ( knownComponentIndex == 255 ) {
+                            Debug.LogError($"Unknown vector component {( ( string ) prop.properties[i].values[0] )}!");
                         }
 
                         sliderComponent[sliderCount] = knownComponentIndex;
@@ -327,17 +326,17 @@ namespace Hekky
                         float sliderMax = 1;
 
                         // Has min
-                        if (prop.properties[i].values.Length > 1) {
-                            sliderMin = float.Parse((string) prop.properties[i].values[1]);
+                        if ( prop.properties[i].values.Length > 1 ) {
+                            sliderMin = float.Parse(( string ) prop.properties[i].values[1]);
                         }
 
                         // Has max
-                        if (prop.properties[i].values.Length > 2) {
-                            sliderMax = float.Parse((string) prop.properties[i].values[2]);
+                        if ( prop.properties[i].values.Length > 2 ) {
+                            sliderMax = float.Parse(( string ) prop.properties[i].values[2]);
                         }
 
                         // Has custom name
-                        if (prop.properties[i].values.Length > 3)  {
+                        if ( prop.properties[i].values.Length > 3 ) {
                             sliderNames[i] = prop.properties[i].values[3].ToString().Trim();
                         }
 
@@ -348,51 +347,46 @@ namespace Hekky
                 }
             }
 
-            if (!ignoreProp) {
-                if (EnsureFoldoutIsRendered()) {
+            if ( !ignoreProp ) {
+                if ( EnsureFoldoutIsRendered() ) {
                     return true;
                 }
 
-                if (disabled) {
+                if ( disabled ) {
                     EditorGUI.BeginDisabledGroup(true);
                 }
 
                 // Get props to show on the same line
-                if (propertyMap[prop.unityInternalProperty.name].sameLine != null &&
-                    propertyMap[prop.unityInternalProperty.name].sameLine.unityInternalProperty != null) {
+                if ( propertyMap[prop.unityInternalProperty.name].sameLine != null &&
+                     propertyMap[prop.unityInternalProperty.name].sameLine.unityInternalProperty != null ) {
                     var sameLineUnityInternalProp =
                         propertyMap[prop.unityInternalProperty.name].sameLine.unityInternalProperty;
 
-                    if (sameLineUnityInternalProp.type == MaterialProperty.PropType.Texture) {
+                    if ( sameLineUnityInternalProp.type == MaterialProperty.PropType.Texture ) {
                         materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
-                                                                 sameLineUnityInternalProp, prop.unityInternalProperty);
-                        if (doLinearProp)
+                            sameLineUnityInternalProp, prop.unityInternalProperty);
+                        if ( doLinearProp )
                             LinearWarning(sameLineUnityInternalProp);
-                    }
-
-                    else if (prop.unityInternalProperty.type == MaterialProperty.PropType.Texture) {
+                    } else if ( prop.unityInternalProperty.type == MaterialProperty.PropType.Texture ) {
                         materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
-                                                                 prop.unityInternalProperty, sameLineUnityInternalProp);
-                        if (doLinearProp)
+                            prop.unityInternalProperty, sameLineUnityInternalProp);
+                        if ( doLinearProp )
                             LinearWarning(prop.unityInternalProperty);
-                    }
-
-                    else
+                    } else
                         materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
-                }
-                else {
-                    switch (prop.unityInternalProperty.type) {
+                } else {
+                    switch ( prop.unityInternalProperty.type ) {
                         case MaterialProperty.PropType.Texture:
                             materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
-                                                                     prop.unityInternalProperty);
-                            if (doLinearProp)
+                                prop.unityInternalProperty);
+                            if ( doLinearProp )
                                 LinearWarning(prop.unityInternalProperty);
                             break;
                         case MaterialProperty.PropType.Vector:
-                            if (sliderCount > 0) {
+                            if ( sliderCount > 0 ) {
                                 Vector4 vecVal = prop.unityInternalProperty.vectorValue;
 
-                                for (int i = 0; i < sliderCount; i++)  {
+                                for ( int i = 0; i < sliderCount; i++ ) {
                                     vecVal[i] = DoSlider(
                                         sliderNames[i].Length == 0
                                             ? $"{prop.displayName} {IndexToVecComponentString(sliderComponent[i])}"
@@ -401,8 +395,7 @@ namespace Hekky
                                 }
 
                                 prop.unityInternalProperty.vectorValue = vecVal;
-                            }
-                            else {
+                            } else {
                                 materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
                             }
 
@@ -418,11 +411,11 @@ namespace Hekky
                     //     materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
                 }
 
-                if (doUVScaleOffsetBlock) {
+                if ( doUVScaleOffsetBlock ) {
                     materialEditor.TextureScaleOffsetProperty(prop.unityInternalProperty);
                 }
 
-                if (disabled) {
+                if ( disabled ) {
                     EditorGUI.EndDisabledGroup();
                 }
             }
@@ -433,8 +426,8 @@ namespace Hekky
         private bool DrawProp(HekkyMaterialProperty prop) {
             bool stopRenderingRoot = false;
 
-            if (prop.GetType() == typeof(HekkyShaderFoldout)) {
-                var foldout = (HekkyShaderFoldout) prop;
+            if ( prop.GetType() == typeof(HekkyShaderFoldout) ) {
+                var foldout = ( HekkyShaderFoldout ) prop;
 
                 // TODO: Foldout stack so that empty foldouts don't render
                 foldoutStack.Push(foldout);
@@ -448,16 +441,15 @@ namespace Hekky
                 //     HGUI.EndGroup();
                 // }
 
-                return RenderPropsRecursive(((HekkyShaderFoldout) prop).materialProperties);
-            }
-            else {
+                return RenderPropsRecursive(( ( HekkyShaderFoldout ) prop ).materialProperties);
+            } else {
                 bool doRenderNormally = true;
 
-                for (int j = 0; j < prop.properties.Length; j++) {
+                for ( int j = 0; j < prop.properties.Length; j++ ) {
                     // Shorthands
                     var currentProp = prop;
                     var currentToken = currentProp.properties[j];
-                    switch (currentToken.propertyType) {
+                    switch ( currentToken.propertyType ) {
                         // Props which alter the GUI layout will stop being parsed
                         case HekkyShaderProperty.DoHeader:
                             stopRenderingRoot |= EnsureFoldoutIsRendered();
@@ -479,7 +471,7 @@ namespace Hekky
 
                         // Shorthands for Unity Built-ins
                         case HekkyShaderProperty.DoBlendMode:
-                            if (BlendModeUnityProp == null)
+                            if ( BlendModeUnityProp == null )
                                 Debug.LogError($"Blend mode property \"_Mode\" couldn't be found!");
                             else {
                                 stopRenderingRoot |= EnsureFoldoutIsRendered();
@@ -524,15 +516,15 @@ namespace Hekky
 #pragma warning disable CS0162
                         // Props which require 3rd party assets to even render
                         case HekkyShaderProperty.RequireBakery:
-                            if (!BAKERY_AVAILABLE)
+                            if ( !BAKERY_AVAILABLE )
                                 doRenderNormally = false;
                             continue;
                         case HekkyShaderProperty.RequireAudioLink:
-                            if (!AUDIOLINK_AVAILABLE)
+                            if ( !AUDIOLINK_AVAILABLE )
                                 doRenderNormally = false;
                             continue;
                         case HekkyShaderProperty.RequireLTCGI:
-                            if (!LTCGI_AVAILABLE)
+                            if ( !LTCGI_AVAILABLE )
                                 doRenderNormally = false;
                             continue;
 
@@ -540,7 +532,7 @@ namespace Hekky
                     }
                 }
 
-                if (doRenderNormally) {
+                if ( doRenderNormally ) {
                     stopRenderingRoot |= DrawPropInternal(prop);
                 }
             }
@@ -549,16 +541,15 @@ namespace Hekky
         }
 
         private bool RenderPropsRecursive(HekkyMaterialProperty[] props) {
-            foreach (var prop in props) {
-                if (DrawProp(prop)) {
+            foreach ( var prop in props ) {
+                if ( DrawProp(prop) ) {
                     break;
                 }
             }
 
-            if (foldoutStack.Count > 0) {
+            if ( foldoutStack.Count > 0 ) {
                 foldoutStack.Pop();
-            }
-            else if (foldoutsToClose > 0) {
+            } else if ( foldoutsToClose > 0 ) {
                 HGUI.EndGroup();
                 foldoutsToClose--;
             }
@@ -584,7 +575,7 @@ namespace Hekky
 
             Stack foldoutStack = new Stack();
 
-            for (int i = 0; i < properties.Length; i++) {
+            for ( int i = 0; i < properties.Length; i++ ) {
                 bool skip = false;
                 bool textureIsLinear = false;
                 var currProp = new HekkyMaterialProperty();
@@ -593,30 +584,28 @@ namespace Hekky
                 // Get tokens
                 string[] propertyTokens = properties[i].displayName.Split(PROPERTY_SEPARATOR);
                 // Trim tokens
-                for (int j = 0; j < propertyTokens.Length; j++) {
+                for ( int j = 0; j < propertyTokens.Length; j++ ) {
                     propertyTokens[j] = propertyTokens[j].Trim();
                 }
 
                 currProp.displayName = propertyTokens[0];
                 var tokensParsed = new List<HekkyShaderToken>();
-                for (int j = 1; j < propertyTokens.Length; j++) {
+                for ( int j = 1; j < propertyTokens.Length; j++ ) {
                     // Tokens can be empty or null
-                    if (propertyTokens[j].Length == 0)
+                    if ( propertyTokens[j].Length == 0 )
                         continue;
 
                     var token = new HekkyShaderToken {
-                        propertyType = HekkyShaderProperty.Unknown,
-                        propertyRaw = propertyTokens[j]
+                        propertyType = HekkyShaderProperty.Unknown, propertyRaw = propertyTokens[j]
                     };
 
                     int indexOfOpeningBracket = propertyTokens[j].IndexOf('(');
                     string methodName;
                     string methodProps;
-                    if (indexOfOpeningBracket == -1) {
+                    if ( indexOfOpeningBracket == -1 ) {
                         methodName = propertyTokens[j].Trim();
                         methodProps = "";
-                    }
-                    else {
+                    } else {
                         methodName = propertyTokens[j].Substring(0, indexOfOpeningBracket).Trim();
                         methodProps = propertyTokens[j].Substring(indexOfOpeningBracket + 1).Trim().TrimEnd(')');
                     }
@@ -624,12 +613,12 @@ namespace Hekky
                     // Split by , then remove whitespacing
                     // TODO: \, ??
                     token.values = methodProps.Split(',');
-                    for (int k = 0; k < token.values.Length; k++) {
-                        token.values[k] = ((string) token.values[k]).Trim();
+                    for ( int k = 0; k < token.values.Length; k++ ) {
+                        token.values[k] = ( ( string ) token.values[k] ).Trim();
                     }
 
                     // Convert to type
-                    switch (methodName) {
+                    switch ( methodName ) {
                         // Special case: recursion!
 
                         case "beginFoldout":
@@ -638,15 +627,15 @@ namespace Hekky
                             break;
                         case "endFoldout":
                             token.propertyType = HekkyShaderProperty.EndFoldout;
-                            int foldoutStart = (int) foldoutStack.Pop();
-                            if (foldoutStack.Count == 0) {
+                            int foldoutStart = ( int ) foldoutStack.Pop();
+                            if ( foldoutStack.Count == 0 ) {
                                 MaterialProperty[] props = new MaterialProperty[i - foldoutStart - 1];
                                 Array.ConstrainedCopy(properties, foldoutStart + 1, props, 0, props.Length);
 
                                 hekkyProps.Add(ParsePropertiesToFoldout(props,
-                                                                        properties[foldoutStart].displayName
-                                                                            .Split(PROPERTY_SEPARATOR)[0],
-                                                                        properties[foldoutStart]));
+                                    properties[foldoutStart].displayName
+                                        .Split(PROPERTY_SEPARATOR)[0],
+                                    properties[foldoutStart]));
 
                                 skip = true;
                             }
@@ -655,9 +644,9 @@ namespace Hekky
                     }
 
                     // Skip everything else if theres something in the foldout stack
-                    if (foldoutStack.Count == 0 && skip == false) {
-                        string key = (string) token.values[0];
-                        switch (methodName) {
+                    if ( foldoutStack.Count == 0 && skip == false ) {
+                        string key = ( string ) token.values[0];
+                        switch ( methodName ) {
                             // String value, trim quotes
                             case "version":
                                 token.propertyType = HekkyShaderProperty.Version;
@@ -665,6 +654,10 @@ namespace Hekky
                                 break;
                             case "title":
                                 token.propertyType = HekkyShaderProperty.Title;
+                                token.values = new object[] {methodProps.Trim('\'')};
+                                break;
+                            case "docsURL":
+                                token.propertyType = HekkyShaderProperty.DocsURL;
                                 token.values = new object[] {methodProps.Trim('\'')};
                                 break;
 
@@ -703,7 +696,7 @@ namespace Hekky
                             case "disableIfNot":
                                 token.propertyType = HekkyShaderProperty.DisableIfNot;
                                 // Default value :: 1
-                                if (token.values.Length == 1) {
+                                if ( token.values.Length == 1 ) {
                                     token.values = new[] {token.values[0], "1"};
                                 }
 
@@ -711,7 +704,7 @@ namespace Hekky
                             case "hideIfNot":
                                 token.propertyType = HekkyShaderProperty.HideIfNot;
                                 // Default value :: 1
-                                if (token.values.Length == 1) {
+                                if ( token.values.Length == 1 ) {
                                     token.values = new[] {token.values[0], "1"};
                                 }
 
@@ -719,7 +712,7 @@ namespace Hekky
                             case "showAlong":
                                 token.propertyType = HekkyShaderProperty.ShowAlong;
                                 // Throw this property into the LUT
-                                if (!propertyMap.ContainsKey(key))
+                                if ( !propertyMap.ContainsKey(key) )
                                     Debug.LogError(
                                         $"Property {key} not found in {currProp.unityInternalProperty.name}!");
                                 else
@@ -765,26 +758,27 @@ namespace Hekky
                 }
 
                 // Textures are a special case
-                if (properties[i].type == MaterialProperty.PropType.Texture &&
-                    !incorrectlyConfiguredTextureCount.ContainsValue(properties[i])) {
+                if ( properties[i].type == MaterialProperty.PropType.Texture &&
+                     !incorrectlyConfiguredTextureCount.ContainsValue(properties[i]) ) {
                     string texPath = AssetDatabase.GetAssetPath(properties[i].textureValue);
                     var importer = AssetImporter.GetAtPath(texPath) as TextureImporter;
-                    if (HekkyUtil.TestBitwiseFlag(properties[i].flags, MaterialProperty.PropFlags.Normal)) {
+                    if ( HekkyUtil.TestBitwiseFlag(properties[i].flags, MaterialProperty.PropFlags.Normal) ) {
                         // increase the counter if its a linear texture marked as sRGB
-                        if (importer != null && importer.textureType != TextureImporterType.NormalMap) {
-                            incorrectlyConfiguredTextureCount.Add(incorrectlyConfiguredTextureCount.Count, properties[i]);
+                        if ( importer != null && importer.textureType != TextureImporterType.NormalMap ) {
+                            incorrectlyConfiguredTextureCount.Add(incorrectlyConfiguredTextureCount.Count,
+                                properties[i]);
                         }
-                    }
-                    else if (textureIsLinear) {
+                    } else if ( textureIsLinear ) {
                         // increase the counter if its a linear texture marked as sRGB
-                        if (importer != null && importer.sRGBTexture) {
-                            incorrectlyConfiguredTextureCount.Add(incorrectlyConfiguredTextureCount.Count, properties[i]);
+                        if ( importer != null && importer.sRGBTexture ) {
+                            incorrectlyConfiguredTextureCount.Add(incorrectlyConfiguredTextureCount.Count,
+                                properties[i]);
                         }
                     }
                 }
 
                 // Skip everything else if theres something in the foldout stack
-                if (foldoutStack.Count == 0 && skip == false) {
+                if ( foldoutStack.Count == 0 && skip == false ) {
                     currProp.properties = tokensParsed.ToArray();
                     hekkyProps.Add(currProp);
                 }
@@ -806,7 +800,7 @@ namespace Hekky
         private static Dictionary<string, HekkyShaderPropertyContainer> RawPropsToLut(MaterialProperty[] properties) {
             var dict = new Dictionary<string, HekkyShaderPropertyContainer>();
 
-            for (int i = 0; i < properties.Length; i++) {
+            for ( int i = 0; i < properties.Length; i++ ) {
                 var container = new HekkyShaderPropertyContainer();
                 container.property = properties[i];
                 dict.Add(properties[i].name, container);
@@ -817,14 +811,14 @@ namespace Hekky
 
         private bool BlendModePopup(MaterialProperty blendModeProp, string displayName) {
             EditorGUI.showMixedValue = blendModeProp.hasMixedValue;
-            var mode = (HGUI.BlendMode) blendModeProp.floatValue;
+            var mode = ( HGUI.BlendMode ) blendModeProp.floatValue;
 
             EditorGUI.BeginChangeCheck();
-            mode = (HGUI.BlendMode) EditorGUILayout.Popup(displayName, (int) mode, blendModeNames);
+            mode = ( HGUI.BlendMode ) EditorGUILayout.Popup(displayName, ( int ) mode, blendModeNames);
             bool result = EditorGUI.EndChangeCheck();
-            if (result) {
+            if ( result ) {
                 materialEditor.RegisterPropertyChangeUndo(displayName);
-                blendModeProp.floatValue = (float) mode;
+                blendModeProp.floatValue = ( float ) mode;
             }
 
             EditorGUI.showMixedValue = false;
@@ -837,59 +831,60 @@ namespace Hekky
             int maxRenderQueue = 5000;
             int defaultRenderQueue = -1;
 
-            switch (blendMode) {
+            switch ( blendMode ) {
                 case HGUI.BlendMode.Opaque:
                     material.SetOverrideTag("RenderType", "");
-                    material.SetFloat("_SrcBlend", (float) UnityEngine.Rendering.BlendMode.One);
-                    material.SetFloat("_DstBlend", (float) UnityEngine.Rendering.BlendMode.Zero);
+                    material.SetFloat("_SrcBlend", ( float ) UnityEngine.Rendering.BlendMode.One);
+                    material.SetFloat("_DstBlend", ( float ) UnityEngine.Rendering.BlendMode.Zero);
                     material.SetFloat("_ZWrite", 1.0f);
                     material.DisableKeyword("_ALPHATEST_ON");
                     material.DisableKeyword("_ALPHABLEND_ON");
                     material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
                     minRenderQueue = -1;
-                    maxRenderQueue = (int) UnityEngine.Rendering.RenderQueue.AlphaTest - 1;
+                    maxRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.AlphaTest - 1;
                     defaultRenderQueue = -1;
                     break;
                 case HGUI.BlendMode.Cutout:
                     material.SetOverrideTag("RenderType", "TransparentCutout");
-                    material.SetFloat("_SrcBlend", (float) UnityEngine.Rendering.BlendMode.One);
-                    material.SetFloat("_DstBlend", (float) UnityEngine.Rendering.BlendMode.Zero);
+                    material.SetFloat("_SrcBlend", ( float ) UnityEngine.Rendering.BlendMode.One);
+                    material.SetFloat("_DstBlend", ( float ) UnityEngine.Rendering.BlendMode.Zero);
                     material.SetFloat("_ZWrite", 1.0f);
                     material.EnableKeyword("_ALPHATEST_ON");
                     material.DisableKeyword("_ALPHABLEND_ON");
                     material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                    minRenderQueue = (int) UnityEngine.Rendering.RenderQueue.AlphaTest;
-                    maxRenderQueue = (int) UnityEngine.Rendering.RenderQueue.GeometryLast;
-                    defaultRenderQueue = (int) UnityEngine.Rendering.RenderQueue.AlphaTest;
+                    minRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.AlphaTest;
+                    maxRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.GeometryLast;
+                    defaultRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.AlphaTest;
                     break;
                 case HGUI.BlendMode.Fade:
                     material.SetOverrideTag("RenderType", "Transparent");
-                    material.SetFloat("_SrcBlend", (float) UnityEngine.Rendering.BlendMode.SrcAlpha);
-                    material.SetFloat("_DstBlend", (float) UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    material.SetFloat("_SrcBlend", ( float ) UnityEngine.Rendering.BlendMode.SrcAlpha);
+                    material.SetFloat("_DstBlend", ( float ) UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                     material.SetFloat("_ZWrite", 0.0f);
                     material.DisableKeyword("_ALPHATEST_ON");
                     material.EnableKeyword("_ALPHABLEND_ON");
                     material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                    minRenderQueue = (int) UnityEngine.Rendering.RenderQueue.GeometryLast + 1;
-                    maxRenderQueue = (int) UnityEngine.Rendering.RenderQueue.Overlay - 1;
-                    defaultRenderQueue = (int) UnityEngine.Rendering.RenderQueue.Transparent;
+                    minRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.GeometryLast + 1;
+                    maxRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.Overlay - 1;
+                    defaultRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.Transparent;
                     break;
                 case HGUI.BlendMode.Transparent:
                     material.SetOverrideTag("RenderType", "Transparent");
-                    material.SetFloat("_SrcBlend", (float) UnityEngine.Rendering.BlendMode.One);
-                    material.SetFloat("_DstBlend", (float) UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+                    material.SetFloat("_SrcBlend", ( float ) UnityEngine.Rendering.BlendMode.One);
+                    material.SetFloat("_DstBlend", ( float ) UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                     material.SetFloat("_ZWrite", 0.0f);
                     material.DisableKeyword("_ALPHATEST_ON");
                     material.DisableKeyword("_ALPHABLEND_ON");
                     material.EnableKeyword("_ALPHAPREMULTIPLY_ON");
-                    minRenderQueue = (int) UnityEngine.Rendering.RenderQueue.GeometryLast + 1;
-                    maxRenderQueue = (int) UnityEngine.Rendering.RenderQueue.Overlay - 1;
-                    defaultRenderQueue = (int) UnityEngine.Rendering.RenderQueue.Transparent;
+                    minRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.GeometryLast + 1;
+                    maxRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.Overlay - 1;
+                    defaultRenderQueue = ( int ) UnityEngine.Rendering.RenderQueue.Transparent;
                     break;
             }
 
-            if (overrideRenderQueue || material.renderQueue < minRenderQueue || material.renderQueue > maxRenderQueue) {
-                if (!overrideRenderQueue)
+            if ( overrideRenderQueue || material.renderQueue < minRenderQueue ||
+                 material.renderQueue > maxRenderQueue ) {
+                if ( !overrideRenderQueue )
                     Debug.LogFormat(
                         "Render queue value outside of the allowed range ({0} - {1}) for selected Blend mode, resetting render queue to default",
                         minRenderQueue, maxRenderQueue);
@@ -903,12 +898,12 @@ namespace Hekky
             // Fix emission for lightmapping
             MaterialEditor.FixupEmissiveFlag(material);
             bool shouldEmissionBeEnabled =
-                (material.globalIlluminationFlags & MaterialGlobalIlluminationFlags.EmissiveIsBlack) == 0;
+                ( material.globalIlluminationFlags & MaterialGlobalIlluminationFlags.EmissiveIsBlack ) == 0;
             HGUI.SetKeyword(material, "_EMISSION", shouldEmissionBeEnabled);
         }
 
         private string IndexToVecComponentString(int id) {
-            switch (id) {
+            switch ( id ) {
                 case 0:
                     return "X";
                 case 1:
@@ -928,8 +923,7 @@ namespace Hekky
     /// <summary>
     /// A Shader property, similar to Unity's base MaterialProperty
     /// </summary>
-    class HekkyMaterialProperty
-    {
+    class HekkyMaterialProperty {
         /// <summary>
         /// The individual properties of this property
         /// </summary>
@@ -946,8 +940,7 @@ namespace Hekky
         public MaterialProperty unityInternalProperty;
     }
 
-    struct HekkyShaderToken
-    {
+    struct HekkyShaderToken {
         /// <summary>
         /// The raw, unparsed shader property
         /// </summary>
@@ -964,12 +957,12 @@ namespace Hekky
         public HekkyShaderProperty propertyType;
     }
 
-    enum HekkyShaderProperty
-    {
+    enum HekkyShaderProperty {
         Unknown = -1, // what the fuck is this type
 
         Version = 0, // version(0.0.1a)
         Title, // title('Hekky\'s Awesome Shader')
+        DocsURL, // docsURL('https://example.com')
         DoTextureFixCollection, // doTextureFixCollection
 
         Disable, // disable
@@ -1005,8 +998,7 @@ namespace Hekky
     /// <summary>
     /// A special property variant, that can take children (generally a foldout)
     /// </summary>
-    class HekkyShaderFoldout : HekkyMaterialProperty
-    {
+    class HekkyShaderFoldout : HekkyMaterialProperty {
         /// <summary>
         /// List of all child properties of the foldout
         /// </summary>
@@ -1016,8 +1008,7 @@ namespace Hekky
     /// <summary>
     /// A small wrapper around <see cref="MaterialProperty"/> to allow more data to be stored
     /// </summary>
-    class HekkyShaderPropertyContainer
-    {
+    class HekkyShaderPropertyContainer {
         /// <summary>
         /// 
         /// </summary>

@@ -11,27 +11,27 @@ HEKKY_DECLARE_TEX2D(_MainTex);
 float4 _MainTex_ST, _MainTex_TexelSize;
 float4 _Color;
 
-HEKKY_DECLARE_TEX2D(_BumpMap);
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_BumpMap);
 float _BumpScale;
 
 float _Metallic;
 // Metal Mask
-HEKKY_DECLARE_TEX2D(_MetallicGlossMap);
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_MetallicGlossMap);
 
 float _Glossiness;
 int _InvertGlossiness;
 // Roughness map
-HEKKY_DECLARE_TEX2D(_SpecGlossMap);
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_SpecGlossMap);
 
 float _ExposureOcclusion;
 
 // Emission
 float4 _EmissionColor;
-HEKKY_DECLARE_TEX2D(_EmissionMap);
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_EmissionMap);
 float _EmissionIntensity;
 
 float _OcclusionStrength;
-HEKKY_DECLARE_TEX2D(_OcclusionMap);
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_OcclusionMap);
 
 // Lighting
 int _LightingMode = 0; // 0 => Realistic ; 1 => Toon ; 2 => Unlit
@@ -43,7 +43,7 @@ int _LightmapSpecular = 0; // Baked lighting specular
 float _Specular;
 float4 _SpecularTint;
 float _AnisoStrength; // aniso XY
-HEKKY_DECLARE_TEX2D(_AnisoMap); // aniso tex ; RG => XY
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_AnisoMap); // aniso tex ; RG => XY
 float4 _AnisoMap_TexelSize;
 float _AnisoAngleOffset;
 
@@ -72,7 +72,7 @@ float _EnableNormalReproj, _NormalReprojBlend;
 // Matcaps
 int _DoMatcap;
 HEKKY_DECLARE_TEX2D(_MatcapTex);
-HEKKY_DECLARE_TEX2D(_MatcapMask);
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_MatcapMask);
 float _MatcapBorder;
 float _MatcapReplaceBlend;
 float _MatcapAddBlend;
@@ -90,8 +90,8 @@ float2 _EmissionAudioLinkAddRange;
 #if BAKERY_ENABLED
 // Declare bakery textures
 HEKKY_DECLARE_TEX2D(_RNM0);
-HEKKY_DECLARE_TEX2D(_RNM1);
-HEKKY_DECLARE_TEX2D(_RNM2);
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_RNM1);
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_RNM2);
 #endif
 
 #endif

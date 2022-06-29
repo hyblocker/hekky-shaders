@@ -428,7 +428,7 @@ inline half3 UnityGI_prefilteredRadiance(const UnityGIInput giData, const float 
     glossIn.roughness = perceptualRoughness;
     glossIn.reflUVW = reflectionDir;
 
-    #ifdef UNITY_SPECCUBE_BOX_PROJECTION
+    #if (defined(UNITY_SPECCUBE_BOX_PROJECTION) && defined(_REFLECTIONSFORCEDMODE_DEFAULT)) || defined(_REFLECTIONSFORCEDMODE_BOX_PROJECTION)
         // we will tweak reflUVW in glossIn directly (as we pass it to Unity_GlossyEnvironment twice for probe0 and probe1), so keep original to pass into BoxProjectedCubemapDirection
         const half3 originalReflUVW = glossIn.reflUVW;
         glossIn.reflUVW = BoxProjectedCubemapDirection (originalReflUVW, giData.worldPos, giData.probePosition[0], giData.boxMin[0], giData.boxMax[0]);
@@ -442,7 +442,7 @@ inline half3 UnityGI_prefilteredRadiance(const UnityGIInput giData, const float 
         UNITY_BRANCH
         if (blendLerp < kBlendFactor)
         {
-            #ifdef UNITY_SPECCUBE_BOX_PROJECTION
+            #if (defined(UNITY_SPECCUBE_BOX_PROJECTION) && defined(_REFLECTIONSFORCEDMODE_DEFAULT)) || defined(_REFLECTIONSFORCEDMODE_BOX_PROJECTION)
                 glossIn.reflUVW = BoxProjectedCubemapDirection (originalReflUVW, giData.worldPos, giData.probePosition[1], giData.boxMin[1], giData.boxMax[1]);
             #endif
 
