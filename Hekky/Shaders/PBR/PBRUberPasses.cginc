@@ -12,6 +12,15 @@ v2f vertBase(appdata v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     
     float4 posWorld = mul(unity_ObjectToWorld, v.vertex);
+    #if UNITY_REQUIRE_FRAG_WORLDPOS
+        #if UNITY_PACK_WORLDPOS_WITH_TANGENT
+            o.tangentToWorldAndPackedData[0].w = posWorld.x;
+            o.tangentToWorldAndPackedData[1].w = posWorld.y;
+            o.tangentToWorldAndPackedData[2].w = posWorld.z;
+        #else
+            o.posWorld = posWorld.xyz;
+        #endif
+    #endif
     o.pos = UnityObjectToClipPos(v.vertex);
     o.eyeVec.xyz = normalizePerVertexNormal(posWorld.xyz - _WorldSpaceCameraPos);
     
@@ -24,14 +33,11 @@ v2f vertBase(appdata v)
     v.normal = lerp(v.normal, normalize(v.vertex), lerp(0, 0.967, _NormalReprojBlend * LIGHTING_NORMAL_REPROJECTION));
 
     float3 normalWorld = UnityObjectToWorldNormal(v.normal);
-    float4 tangentWorld = mul(unity_ObjectToWorld, v.tangent);
-    tangentWorld.w = v.tangent.w;
-    float3 binormalWorld = cross(normalWorld, tangentWorld) * v.tangent.w;
-    
-    o.normal = normalWorld.xyz;
-    o.tangent = tangentWorld;
-    o.binormal = binormalWorld.xyz;
-    o.worldPos = posWorld.xyz;
+    float4 tangentWorld = float4(UnityObjectToWorldDir(v.tangent.xyz), v.tangent.w);
+    float3x3 tangentToWorld = CreateTangentToWorldPerVertex(normalWorld, tangentWorld.xyz, tangentWorld.w);
+    o.tangentToWorldAndPackedData[0].xyz = tangentToWorld[0];
+    o.tangentToWorldAndPackedData[1].xyz = tangentToWorld[1];
+    o.tangentToWorldAndPackedData[2].xyz = tangentToWorld[2];
 
     // Required to receive shadows
     UNITY_TRANSFER_LIGHTING(o, v.uv1);
@@ -44,7 +50,7 @@ v2f vertBase(appdata v)
     #if defined(HAS_ATTRIBUTE_COLOR)
         o.color = v.color;
     #endif
-
+    
     UNITY_TRANSFER_FOG_COMBINED_WITH_EYE_VEC(o,o.pos);
     return o;
 }
@@ -59,15 +65,26 @@ fixed4 fragBase(v2f i, bool frontFace : SV_IsFrontFace) : SV_Target
     UNITY_SETUP_INSTANCE_ID(i);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-	PATCH_INPUT_DATA(i, frontFace);
-
-    INIT_SHADING_DATA(shadingData);
+    INIT_SHADING_DATA(shadingData, frontFace);
     
     prepareMaterial(material, shadingData);
+    if (_Mode == 1) {
+        clip(material.alpha - _AlphaClip);
+    }
     float4 finalCol = evaluateMaterial(shadingData, material);
     
     UNITY_EXTRACT_FOG_FROM_EYE_VEC(i);
     UNITY_APPLY_FOG(_unity_fogCoord, finalCol.rgb);
+
+    // return float4(shadingData.normal, 1);
+
+    // HekkyPresent(finalCol, i);
+    // #pragma multi_compile _ UNITY_HDR_ON
+
+    // and then check for HDR with
+    // #ifdef UNITY_HDR_ON
+    // ...
+    // #endif
 
     return finalCol;
 }
@@ -85,7 +102,15 @@ v2f vertAdd(appdata v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     
     float4 posWorld = mul(unity_ObjectToWorld, v.vertex);
-
+    #if UNITY_REQUIRE_FRAG_WORLDPOS
+        #if UNITY_PACK_WORLDPOS_WITH_TANGENT
+            o.tangentToWorldAndPackedData[0].w = posWorld.x;
+            o.tangentToWorldAndPackedData[1].w = posWorld.y;
+            o.tangentToWorldAndPackedData[2].w = posWorld.z;
+        #else
+            o.posWorld = posWorld.xyz;
+        #endif
+    #endif
     o.pos = UnityObjectToClipPos(v.vertex);
     o.eyeVec.xyz = normalizePerVertexNormal(posWorld.xyz - _WorldSpaceCameraPos);
     
@@ -98,17 +123,14 @@ v2f vertAdd(appdata v)
     v.normal = lerp(v.normal, normalize(v.vertex), lerp(0, 0.967, _NormalReprojBlend * LIGHTING_NORMAL_REPROJECTION));
 
     float3 normalWorld = UnityObjectToWorldNormal(v.normal);
-    float4 tangentWorld = mul(unity_ObjectToWorld, v.tangent);
-    tangentWorld.w = v.tangent.w;
-    float3 binormalWorld = cross(normalWorld, tangentWorld) * v.tangent.w;
+    float4 tangentWorld = float4(UnityObjectToWorldDir(v.tangent.xyz), v.tangent.w);
+    float3x3 tangentToWorld = CreateTangentToWorldPerVertex(normalWorld, tangentWorld.xyz, tangentWorld.w);
+    o.tangentToWorldAndPackedData[0].xyz = tangentToWorld[0];
+    o.tangentToWorldAndPackedData[1].xyz = tangentToWorld[1];
+    o.tangentToWorldAndPackedData[2].xyz = tangentToWorld[2];
     
-    o.normal = normalWorld.xyz;
-    o.tangent = tangentWorld;
-    o.binormal = binormalWorld.xyz;
-    o.worldPos = posWorld.xyz;
-
-    // Required to receive shadows
-    UNITY_TRANSFER_LIGHTING(o, v.uv1);
+   // // Required to receive shadows
+   // UNITY_TRANSFER_LIGHTING(o, v.uv1);
     o.ambientOrLightmapUV = VertexGIForward(v, posWorld, normalWorld);
     
     #ifdef _TANGENT_TO_WORLD
@@ -138,11 +160,12 @@ fixed4 fragAdd(v2f i, bool frontFace : SV_IsFrontFace) : SV_Target
         UNITY_SETUP_INSTANCE_ID(i);
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-		PATCH_INPUT_DATA(i, frontFace);
-
-        INIT_SHADING_DATA(shadingData);
-    
-        // float4 finalCol = 0;
+        INIT_SHADING_DATA(shadingData, frontFace);
+        
+        prepareMaterial(material, shadingData);
+        if (_Mode == 1) {
+            clip(material.alpha - _AlphaClip);
+        }
         finalCol = evaluateMaterial(shadingData, material);
     
         UNITY_EXTRACT_FOG_FROM_EYE_VEC(i);
@@ -168,7 +191,16 @@ v2f vertOutline(appdata v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     
     float4 posWorld = mul(unity_ObjectToWorld, v.vertex);
-
+    #if UNITY_REQUIRE_FRAG_WORLDPOS
+        #if UNITY_PACK_WORLDPOS_WITH_TANGENT
+            o.tangentToWorldAndPackedData[0].w = posWorld.x;
+            o.tangentToWorldAndPackedData[1].w = posWorld.y;
+            o.tangentToWorldAndPackedData[2].w = posWorld.z;
+        #else
+            o.posWorld = posWorld.xyz;
+        #endif
+    #endif
+    o.pos = UnityObjectToClipPos(v.vertex);
     o.eyeVec.xyz = normalizePerVertexNormal(posWorld.xyz - _WorldSpaceCameraPos);
     
     // Transform UVs
@@ -179,12 +211,10 @@ v2f vertOutline(appdata v)
 
     float3 normalWorld = UnityObjectToWorldNormal(v.normal);
     float4 tangentWorld = float4(UnityObjectToWorldDir(v.tangent.xyz), v.tangent.w);
-    float3 binormalWorld = cross(normalWorld, tangentWorld) * (v.tangent.w * unity_WorldTransformParams.w);
-    
-    o.normal = normalWorld.xyz;
-    o.tangent = tangentWorld;
-    o.binormal = binormalWorld.xyz;
-    o.worldPos = posWorld.xyz;
+    float3x3 tangentToWorld = CreateTangentToWorldPerVertex(normalWorld, tangentWorld.xyz, tangentWorld.w);
+    o.tangentToWorldAndPackedData[0].xyz = tangentToWorld[0];
+    o.tangentToWorldAndPackedData[1].xyz = tangentToWorld[1];
+    o.tangentToWorldAndPackedData[2].xyz = tangentToWorld[2];
 
     // Required to receive shadows
     UNITY_TRANSFER_LIGHTING(o, v.uv1);
@@ -224,9 +254,12 @@ fixed4 fragOutline(v2f i, bool frontFace : SV_IsFrontFace) : SV_Target
         UNITY_SETUP_INSTANCE_ID(i);
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-        INIT_SHADING_DATA(shadingData);
+        INIT_SHADING_DATA(shadingData, frontFace);
 
         prepareMaterial(material, shadingData);
+        if (_Mode == 1) {
+            clip(material.alpha - _AlphaClip);
+        }
         finalCol = evaluateOutline(shadingData, material);
     
         UNITY_EXTRACT_FOG_FROM_EYE_VEC(i);

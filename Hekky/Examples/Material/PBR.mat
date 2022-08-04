@@ -1,0 +1,175 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: PBR
+  m_Shader: {fileID: 4800000, guid: de0b734b74e3ba84f9b7566dbe56016a, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _AnisoMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _DFG:
+        m_Texture: {fileID: 2800000, guid: d3d38ef6596422f4e9cbfe19f7ba0773, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MatcapMask:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MatcapTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MetallicGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _OcclusionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RNM0:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RNM1:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _RNM2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SpecGlossMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - _AlphaClip: 0.5
+    - _AnisoAngleOffset: 0
+    - _AnisoStrength: 0
+    - _AudioLink: 0
+    - _AudioLinkDebug: 0
+    - _AudioLinkDebugBass: 0
+    - _AudioLinkDebugHighMid: 0
+    - _AudioLinkDebugLowMid: 0
+    - _AudioLinkDebugTreble: 0
+    - _Bakery: 0
+    - _BlendModes: 0
+    - _BumpScale: 1
+    - _CullMode: 2
+    - _DoMatcap: 0
+    - _DoOutline: 0
+    - _DstBlend: 0
+    - _EmissionAudioLinkAddChannel: 0
+    - _EmissionAudioLinkChannel: 0
+    - _EmissionAudioLinkMultiplyChannel: 0
+    - _EmissionAudioLinkRange: 0
+    - _EmissionIntensity: 1
+    - _EnableNormalReproj: 0
+    - _ExposureOcclusion: 0.2
+    - _FoldoutAdvancedBegin: 0
+    - _FoldoutAdvancedEnd: 0
+    - _FoldoutAnisoBegin: 0
+    - _FoldoutAnisoEnd: 0
+    - _FoldoutAudioLinkDebugBegin: 0
+    - _FoldoutAudioLinkDebugEnd: 0
+    - _FoldoutEmissionAudioLinkBegin: 1
+    - _FoldoutEmissionAudioLinkEnd: 0
+    - _FoldoutEmissionBegin: 1
+    - _FoldoutEmissionEnd: 0
+    - _FoldoutExternalModulesBegin: 0
+    - _FoldoutExternalModulesEnd: 0
+    - _FoldoutLTCGIConfigBegin: 0
+    - _FoldoutLTCGIConfigEnd: 0
+    - _FoldoutLightingBegin: 0
+    - _FoldoutLightingEnd: 0
+    - _FoldoutMainBegin: 1
+    - _FoldoutMainEnd: 0
+    - _FoldoutMatcapBegin: 1
+    - _FoldoutMatcapEnd: 0
+    - _FoldoutNormalReprojectionBegin: 0
+    - _FoldoutNormalReprojectionEnd: 0
+    - _FoldoutOcclusionBegin: 0
+    - _FoldoutOcclusionEnd: 0
+    - _FoldoutOutlineBegin: 0
+    - _FoldoutOutlineEnd: 0
+    - _FoldoutReflectionsBegin: 1
+    - _FoldoutReflectionsEnd: 0
+    - _FoldoutSpecularBegin: 1
+    - _FoldoutSpecularEnd: 0
+    - _FoldoutToonBegin: 0
+    - _FoldoutToonEnd: 0
+    - _Footer: 0
+    - _Glossiness: 1
+    - _Header: 0
+    - _InvertGlossiness: 0
+    - _LTCGI: 0
+    - _LightingMode: 0
+    - _LightingShadows: 1
+    - _LightmapSpecular: 1
+    - _LightmapSpecularMaxSmoothness: 1
+    - _Manifest: 0
+    - _MatcapAddBlend: 0
+    - _MatcapBorder: 0
+    - _MatcapDifferenceBlend: 0
+    - _MatcapMultiplyBlend: 0
+    - _MatcapOverlayBlend: 0
+    - _MatcapReflectionBlend: 1
+    - _MatcapReplaceBlend: 1
+    - _MathGradientEnd: 1
+    - _MathGradientStart: 0
+    - _Metallic: 0
+    - _MiscView: 0
+    - _Mode: 0
+    - _NormalReprojBlend: 1
+    - _OcclusionStrength: 1
+    - _OutlineWidth: 0
+    - _ReflectionsForcedMode: 0
+    - _Specular: 0
+    - _SpecularMode: 0
+    - _SrcBlend: 1
+    - _ToonMathGradientMaxBrightness: 1
+    - _ToonMathGradientMinBrightness: 0
+    - _Version: 1
+    - _ZTest: 1
+    - _ZWrite: 1
+    - _initSpacing: 0
+    m_Colors:
+    - _Color: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionAudioLinkAddRange: {r: 0, g: 0, b: 0, a: 0}
+    - _EmissionAudioLinkMultiplyRange: {r: 0, g: 1, b: 0, a: 0}
+    - _EmissionAudioLinkRange: {r: 0, g: 0, b: 0, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _LTCGI_Intensity: {r: 1, g: 1, b: 1, a: 0}
+    - _LTCGI_Scale: {r: 1, g: 1, b: 1, a: 0}
+    - _MatcapColor: {r: 1, g: 1, b: 1, a: 1}
+    - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    - _SpecularTint: {r: 1, g: 1, b: 1, a: 1}

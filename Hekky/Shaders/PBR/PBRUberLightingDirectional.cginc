@@ -5,10 +5,10 @@ inline float3 sampleSunAreaLight(const float3 lightDirection, const ShadingData 
     // Replaced frameUniforms.sun
     #if defined(SUN_AS_AREA_LIGHT)
     // cos(sunAngle), sin(sunAngle), 1/(sunAngle*HALO_SIZE-sunAngle), HALO_EXP
-    static const float sunAngle = 0.00951f;
-    static const float sunHaloSize = 10.0f;
-    static const float sunHaloFalloff = 80.0f;
-    static const float4 sunParameters = float4(cos(sunAngle), sin(sunAngle), 1/(sunAngle*sunHaloSize-sunAngle), sunHaloFalloff);
+    const float sunAngle = 0.00951f;
+    const float sunHaloSize = 10.0f;
+    const float sunHaloFalloff = 80.0f;
+    const float4 sunParameters = float4(cos(sunAngle), sin(sunAngle), 1/(sunAngle*sunHaloSize-sunAngle), sunHaloFalloff);
     if (sunParameters.w >= 0.0) {
         // simulate sun as disc area light
         float LoR = dot(lightDirection, shading.reflected);

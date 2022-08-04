@@ -36,7 +36,7 @@ struct Light {
     // rgb, pre-exposed intensity
     float4 colorIntensity;
     float3 l; // L
-    float3 NdotL;
+    float NdotL;
     float attenuation;
     float3 worldPosition;
     float distance; // Pre-computed distance between light and pixel

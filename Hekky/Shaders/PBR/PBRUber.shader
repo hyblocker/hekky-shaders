@@ -5,12 +5,13 @@
         // ==================== CORE ====================
         
         [HideInInspector]_Manifest("__;title('Hekky PBR Uber');docsURL('https://docs.hyblocker.dev/en/shaders/hekky-pbr/reference')", Float) = 0
-        [HideInInspector]_Version("__;version(1.1);", Float) = 1
+        [HideInInspector]_Version("__;version(1.3);", Float) = 1
         
         _Header("__;doHeader;spacing;spacing;", Float) = 0
         _MiscView("__;doTextureFixCollection;", Float) = 0
         _BlendModes("Rendering Mode;doBlendMode;", Float) = 0
         [Enum(UnityEngine.Rendering.CullMode)]_CullMode("Cull Mode", Int) = 2
+        _AlphaClip("Alpha Clip;hideIfNot(_Mode, 1)", Range(0,1)) = 0.5
         _initSpacing("__;spacing;", Int) = 0
         
         // ==================== MAIN ====================
@@ -25,10 +26,10 @@
             
             _Glossiness ("Roughness; hide; showAlong(_SpecGlossMap)", Range(0.0, 1.0)) = 1
             _SpecGlossMap("Roughness Map; linear", 2D) = "white" {}
-            [Toggle(_InvertGlossiness)] _InvertGlossiness("Invert Roughness", Int) = 0
+            [ToggleUI(_InvertGlossiness)] _InvertGlossiness("Invert Roughness", Int) = 1
 
             _BumpScale("Scale; hide; showAlong(_BumpMap)", Range(0.0, 2.0)) = 1.0
-            [Normal] _BumpMap ("Normal Map", 2D) = "bump" {}
+            _BumpMap ("Normal Map", 2D) = "bump" {}
         
         _FoldoutMainEnd("__; endFoldout", Float) = 0.0
         
@@ -76,6 +77,7 @@
         
                 _FoldoutAdvancedBegin("Advanced; beginFoldout", Float) = 0.0
                     [ToggleUI]_LightmapSpecular("Baked specular", Float) = 1.0
+                    _LightmapSpecularMaxSmoothness("Max baked specular smoothness", Range(0,1)) = 1.0
                 _FoldoutAdvancedEnd("__; endFoldout", Float) = 0.0
 
             _FoldoutSpecularEnd("__; endFoldout", Float) = 0.0
@@ -112,6 +114,7 @@
             _FoldoutMatcapBegin("Matcap; beginFoldout", Float) = 0.0
             
                 [ToggleUI]_DoMatcap("Enable Matcap", Int) = 0
+                _MatcapColor("Color; hide; showAlong(_MatcapTex);", Color) = (1,1,1)
                 _MatcapTex("Texture; linear; hideIfNot(_DoMatcap)", 2D) = "white" {}
                 _MatcapMask("Mask; linear; hideIfNot(_DoMatcap)", 2D) = "white" {}
                 _MatcapBorder("Border; hideIfNot(_DoMatcap)", Range(0.0,0.5)) = 0
@@ -162,7 +165,7 @@
         
         _FoldoutExternalModulesBegin("Other modules; beginFoldout", Float) = 0.0
          
-            [Enum(None, 0, SH, 1, RNM, 2)] _Bakery ("Bakery Mode; requireBakery", Int) = 0
+            [KeywordEnum(None, SH, RNM, MonoSH)] _Bakery ("Bakery Mode; requireBakery", Int) = 0
                 _RNM0("RNM0; requireBakery; disable", 2D) = "black" {}
                 _RNM1("RNM1; requireBakery; disable", 2D) = "black" {}
                 _RNM2("RNM2; requireBakery; disable", 2D) = "black" {}
@@ -174,12 +177,19 @@
 
         _FoldoutExternalModulesEnd("__; endFoldout", Float) = 0.0
         
+        // ==================== LTCGI SETTINGS ====================
+        
+        _FoldoutLTCGIConfigBegin("LTCGI Settings; beginFoldout", Float) = 0.0
+            _LTCGI_Scale ("LTCGI Scale; slider(X, 0, 50); slider(Y, 0, 50); slider(Z, 0, 50); hideIfNot(_LTCGI); requireLTCGI", Vector) = (1,1,1,0)
+            _LTCGI_Intensity ("LTCGI Intensity; slider(X, 0, 5, Diffuse Intensity); slider(Y, 0, 5, Specular Intensity); hideIfNot(_LTCGI); requireLTCGI", Vector) = (1,1,1,0)
+        _FoldoutLTCGIConfigEnd("__; endFoldout", Float) = 0.0
+        
         // Blending state
         [HideInInspector] _Mode ("__mode", Float) = 0.0
         [HideInInspector] _SrcBlend ("__src", Float) = 1.0
         [HideInInspector] _DstBlend ("__dst", Float) = 0.0
         [HideInInspector] _ZWrite ("__zw", Float) = 1.0
-        [HideInInspector] _ZTest ("__zt", Float) = 1.0
+        [HideInInspector] _ZTest ("__zt", Float) = 4.0
         
         // ==================== FOOTER ====================
         
@@ -216,7 +226,7 @@
             #pragma shader_feature_local _SPECGLOSSMAP
             #pragma shader_feature_local _PARALLAXMAP
             
-            #pragma shader_feature_local _ _BAKERY_RNM _BAKERY_SH
+            #pragma shader_feature_local _BAKERY_NONE _BAKERY_RNM _BAKERY_SH _BAKERY_MONOSH
             #pragma shader_feature_local _LTCGI
             #pragma shader_feature_local _AUDIOLINK
             #pragma shader_feature_local _REFLECTIONSFORCEDMODE_DEFAULT _REFLECTIONSFORCEDMODE_SPHERICAL_PROJECTION _REFLECTIONSFORCEDMODE_BOX_PROJECTION
@@ -255,6 +265,8 @@
             
             #pragma multi_compile_fwdadd_fullshadows
             #pragma multi_compile_fog
+            #pragma multi_compile_instancing
+
             // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
             // #pragma multi_compile _ LOD_FADE_CROSSFADE
             
@@ -283,6 +295,7 @@
             
             #pragma multi_compile_fwdadd_fullshadows
             #pragma multi_compile_fog
+            #pragma multi_compile_instancing
             // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
             // #pragma multi_compile _ LOD_FADE_CROSSFADE
             
@@ -325,6 +338,25 @@
 
         // Meta not implemented
         UsePass "Standard/META"
+        
+        Pass
+        {
+            // Alpha map enabled Bakery-specific meta pass
+
+            Name "META_BAKERY"
+
+            Tags { "LightMode"="Meta" }
+            Cull Off
+            
+            CGPROGRAM
+
+            #include "PBRUberPassesMeta.cginc"
+            
+            #pragma vertex vertBakeryMeta
+            #pragma fragment fragBakeryMeta
+
+            ENDCG
+        }
     }
     
     CustomEditor "Hekky.HekkyDynamicEditorGUI"

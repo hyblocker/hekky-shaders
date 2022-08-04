@@ -164,15 +164,15 @@ inline float3 Irradiance_SphericalHarmonicsUnity(float3 normal, float3 ambient, 
 inline float3 DecodeDirectionalLightmapSpecular(half3 color, half4 dirTex, half3 normalWorld, out Light derivedLight)
 {
     derivedLight = (Light) 0;
-    derivedLight.colorIntensity = float4(color, 1.0);
-    derivedLight.l = dirTex.xyz * 2 - 1;
+    derivedLight.colorIntensity = float4(color, 1.f);
+    derivedLight.l = dirTex.xyz * 2.f - 1.f;
 
-    // the length of the light direction represents the light's 'directonality'.
+    // the length of the light direction represents the light's 'directionality'.
     // this means 1 for all light coming from this direction, and lower values as the light becomes more "ambient"
-    half directionality = max(0.001, length(derivedLight.l));
+    half directionality = max(0.001f, length(derivedLight.l));
     derivedLight.l /= directionality;
 
-    half3 ambient = derivedLight.colorIntensity;
+    half3 ambient = derivedLight.colorIntensity * (1.f - directionality);
     derivedLight.colorIntensity *= directionality;
     derivedLight.attenuation = directionality;
     
@@ -187,7 +187,7 @@ inline float3 DecodeDirectionalLightmapSpecular(half3 color, half4 dirTex, half3
 
 #if BAKERY_ENABLED
 // Adapted from Bakery.cginc
-inline float3 DecodeRNMLightmap(half3 color, half2 lightmapUV, half3 normalTangent, float3x3 tangentToWorld,
+inline float3 DecodeRNMLightmap(half3 color, half2 lightmapUV, half3 normalTangent, float3x3 tangentToWorld, float3 normal,
     out Light derivedLight)
 {
     // From Bakery shaders
@@ -222,9 +222,9 @@ inline float3 DecodeRNMLightmap(half3 color, half2 lightmapUV, half3 normalTange
     UNITY_BRANCH
     if (BAKED_SPECULAR_ENABLED)
     {
-        float3 dominantDirT = rnmBasis0 * luminance(rnm0) +
-                              rnmBasis1 * luminance(rnm1) +
-                              rnmBasis2 * luminance(rnm2);
+        float3 dominantDirT = rnmBasis0 * luminosity(rnm0) +
+                              rnmBasis1 * luminosity(rnm1) +
+                              rnmBasis2 * luminosity(rnm2);
 
         float3 dominantDirTN = normalize(dominantDirT);
         float3 specColor = saturate(dot(rnmBasis0, dominantDirTN)) * rnm0 +
@@ -239,29 +239,29 @@ inline float3 DecodeRNMLightmap(half3 color, half2 lightmapUV, half3 normalTange
 
         derivedLight.colorIntensity = float4(specColor * directionality, 1.f);
         derivedLight.attenuation = directionality;
-        derivedLight.NdotL = saturate(dot(normalWorld, derivedLight.l));
+        derivedLight.NdotL = saturate(dot(normal, derivedLight.l));
     }
     
     return irradiance;
 }
 
-inline half3 DecodeSHLightmap(half3 L0, half3 lightmapUV, half3 normal, out Light derivedLight)
+inline half3 DecodeSHLightmap(half3 L0, half2 lightmapUV, half3 normal, out Light derivedLight)
 {
     float3 irradiance;
     derivedLight = (Light)0;
-    
+
     #ifdef SHADER_API_D3D11
         float width, height;
         _RNM0.GetDimensions(width, height);
         const float4 rnm_TexelSize = float4( width, height, 1.0 / width, 1.0 / height );
     
-        float3 nL1x = DecodeLightmap( SampleTexture2DBicubicFilter( TEXTURE2D_PARAM( _RNM0, sampler_RNM0 ), lightmapUV, rnm_TexelSize ));
-        float3 nL1y = DecodeLightmap( SampleTexture2DBicubicFilter( TEXTURE2D_PARAM( _RNM1, sampler_RNM0 ), lightmapUV, rnm_TexelSize ));
-        float3 nL1z = DecodeLightmap( SampleTexture2DBicubicFilter( TEXTURE2D_PARAM( _RNM2, sampler_RNM0 ), lightmapUV, rnm_TexelSize ));
+        float3 nL1x = DecodeLightmap( SampleTexture2DBicubicFilter( TEXTURE2D_PARAM( _RNM0, sampler_RNM0 ), lightmapUV, rnm_TexelSize )) * 2 - 1;
+        float3 nL1y = DecodeLightmap( SampleTexture2DBicubicFilter( TEXTURE2D_PARAM( _RNM1, sampler_RNM0 ), lightmapUV, rnm_TexelSize )) * 2 - 1;
+        float3 nL1z = DecodeLightmap( SampleTexture2DBicubicFilter( TEXTURE2D_PARAM( _RNM2, sampler_RNM0 ), lightmapUV, rnm_TexelSize )) * 2 - 1;
     #else
-        float3 nL1x = DecodeLightmap( HEKKY_SAMPLE_TEX2D_SAMPLER( _RNM0, sampler_RNM0, lightmapUV ));
-        float3 nL1y = DecodeLightmap( HEKKY_SAMPLE_TEX2D_SAMPLER( _RNM1, sampler_RNM0, lightmapUV ));
-        float3 nL1z = DecodeLightmap( HEKKY_SAMPLE_TEX2D_SAMPLER( _RNM2, sampler_RNM0, lightmapUV ));
+        float3 nL1x = DecodeLightmap( HEKKY_SAMPLE_TEX2D_SAMPLER( _RNM0, sampler_RNM0, lightmapUV )) * 2 - 1;
+        float3 nL1y = DecodeLightmap( HEKKY_SAMPLE_TEX2D_SAMPLER( _RNM1, sampler_RNM0, lightmapUV )) * 2 - 1;
+        float3 nL1z = DecodeLightmap( HEKKY_SAMPLE_TEX2D_SAMPLER( _RNM2, sampler_RNM0, lightmapUV )) * 2 - 1;
     #endif
     
     float3 L1x = nL1x * L0 * 2;
@@ -273,20 +273,20 @@ inline half3 DecodeSHLightmap(half3 L0, half3 lightmapUV, half3 normal, out Ligh
         float lumaL1x = dot(L1x, 1);
         float lumaL1y = dot(L1y, 1);
         float lumaL1z = dot(L1z, 1);
-        float lumaSH = shEvaluateDiffuseL1Geomerics_local(lumaL0, float3(lumaL1x, lumaL1y, lumaL1z), normalWorld);
+        float lumaSH = shEvaluateDiffuseL1Geomerics_local(lumaL0, float3(lumaL1x, lumaL1y, lumaL1z), normal);
 
-        irradiance = L0 + normalWorld.x * L1x + normalWorld.y * L1y + normalWorld.z * L1z;
+        irradiance = L0 + normal.x * L1x + normal.y * L1y + normal.z * L1z;
         float regularLumaSH = dot(sh, 1);
         irradiance *= lerp(1, lumaSH / regularLumaSH, saturate(regularLumaSH*16));
     #else
-        irradiance = L0 + normalWorld.x * L1x + normalWorld.y * L1y + normalWorld.z * L1z;
+        irradiance = L0 + normal.x * L1x + normal.y * L1y + normal.z * L1z;
     #endif
 
     // Specular
     UNITY_BRANCH
     if (BAKED_SPECULAR_ENABLED)
     {
-        float3 dominantDir = float3(luminance(nL1x), luminance(nL1y), luminance(nL1z));
+        float3 dominantDir = float3(luminosity(nL1x), luminosity(nL1y), luminosity(nL1z));
 
         // the length of the light direction represents the light's 'directonality'.
         // this means 1 for all light coming from this direction, and lower values as the light becomes more "ambient"
@@ -296,9 +296,65 @@ inline half3 DecodeSHLightmap(half3 L0, half3 lightmapUV, half3 normal, out Ligh
 
         derivedLight.colorIntensity = float4(irradiance * directionality, 1.f);
         derivedLight.attenuation = directionality;
-        derivedLight.NdotL = saturate(dot(normalWorld, derivedLight.l));
+        derivedLight.NdotL = saturate(dot(normal, derivedLight.l));
     }
     
+    return irradiance;
+}
+
+inline half3 DecodeMonoSHLightmap(half3 L0, half3 dominantDir, half2 lightmapUV, half3 normal, out Light derivedLight)
+{
+    float3 irradiance;
+    derivedLight = (Light)0;
+
+    // float3 dominantDir = bakedDirTex;
+    
+    // #ifdef SHADER_API_D3D11
+    //     float width, height;
+    //     unity_Lightmap.GetDimensions(width, height);
+    //     const float4 unity_Lightmap_TexelSize = float4( width, height, 1.0 / width, 1.0 / height );
+    // 
+    //     float3 dominantDir = SampleTexture2DBicubicFilter( TEXTURE2D_PARAM(unity_LightmapInd, samplerunity_Lightmap), lightmapUV, unity_Lightmap_TexelSize ).xyz;
+    //     float3 L0 = DecodeLightmap( SampleTexture2DBicubicFilter( TEXTURE2D_PARAM( unity_Lightmap, samplerunity_Lightmap), lightmapUV, unity_Lightmap_TexelSize ) );
+    // #else
+    //     float3 dominantDir = HEKKY_SAMPLE_TEX2D_SAMPLER(unity_LightmapInd, lightmapUV, samplerunity_Lightmap).xyz;
+    //     float3 L0 = DecodeLightmap(HEKKY_SAMPLE_TEX2D_SAMPLER(unity_Lightmap, lightmapUV, samplerunity_Lightmap));
+    // #endif
+
+    float3 nL1 = dominantDir * 2 - 1;
+    float3 L1x = nL1.x * L0 * 2;
+    float3 L1y = nL1.y * L0 * 2;
+    float3 L1z = nL1.z * L0 * 2;
+    
+    #if BAKERY_SHNONLINEAR
+        float lumaL0 = dot(L0, 1);
+        float lumaL1x = dot(L1x, 1);
+        float lumaL1y = dot(L1y, 1);
+        float lumaL1z = dot(L1z, 1);
+        float lumaSH = shEvaluateDiffuseL1Geomerics_local(lumaL0, float3(lumaL1x, lumaL1y, lumaL1z), normal);
+
+        irradiance = L0 + normal.x * L1x + normal.y * L1y + normal.z * L1z;
+        float regularLumaSH = dot(irradiance, 1);
+        irradiance *= lerp(1, lumaSH / regularLumaSH, saturate(regularLumaSH*16));
+    #else
+        irradiance = L0 + normal.x * L1x + normal.y * L1y + normal.z * L1z;
+    #endif
+
+    // Specular
+    UNITY_BRANCH
+    if (BAKED_SPECULAR_ENABLED)
+    {
+        // the length of the light direction represents the light's 'directionality'.
+        // this means 1 for all light coming from this direction, and lower values as the light becomes more "ambient"
+        derivedLight.l = nL1;
+        half directionality = max(0.001, length(derivedLight.l));
+        derivedLight.l /= directionality;
+
+        derivedLight.colorIntensity = float4(irradiance * directionality, 1.f);
+        derivedLight.attenuation = directionality;
+        derivedLight.NdotL = saturate(dot(normal, derivedLight.l));
+    }
+
     return irradiance;
 }
 #endif
@@ -339,31 +395,36 @@ inline float3 UnityGI_Irradiance(const ShadingData shading, const float3 tangent
         half4 bakedColorTex = SampleLightmapBicubic(shading.lightmapUV.xy);
         half3 bakedColor = DecodeLightmap(bakedColorTex);
 
-        #if DIRLIGHTMAP_COMBINED
+        #if defined(DIRLIGHTMAP_COMBINED)
 
             fixed4 bakedDirTex = SampleLightmapDirBicubic (shading.lightmapUV.xy);
-            irradiance += DecodeDirectionalLightmap (bakedColor, bakedDirTex, shading.normal);
-            AOIrradiance = irradiance;
+            #if BAKERY_ENABLED && defined(_BAKERY_MONOSH)
+                irradiance += DecodeMonoSHLightmap (bakedColor, bakedDirTex, shading.lightmapUV.xy, shading.normal, derivedLight);
+                AOIrradiance = irradiance;
+            #else
+                irradiance += DecodeDirectionalLightmap (bakedColor, bakedDirTex, shading.normal);
+                AOIrradiance = irradiance;
 
-            UNITY_BRANCH
-            if (BAKED_SPECULAR_ENABLED)
-            {
-                irradiance = DecodeDirectionalLightmapSpecular(bakedColor, bakedDirTex, shading.normal, derivedLight);
-            }
-
+                UNITY_BRANCH
+                if (BAKED_SPECULAR_ENABLED)
+                {
+                    irradiance = DecodeDirectionalLightmapSpecular(bakedColor, bakedDirTex, shading.normal, derivedLight);
+                }
+            #endif
+            
         #else
             // Not a directional lightmap
 
             // Special case: Bakery RNM and SH lightmaps, for increased visual fidelity
             #if BAKERY_ENABLED
                 #if defined(_BAKERY_RNM)
-                    irradiance = DecodeRNMLightmap(bakedColor, shading.lightmapUV.xy, tangentNormal, shading.tangentToWorld, derivedLight);
+                    irradiance = DecodeRNMLightmap(bakedColor, shading.lightmapUV.xy, tangentNormal, shading.tangentToWorld, shading.normal, derivedLight);
                 #endif
                 
                 #if defined(_BAKERY_SH)
                     irradiance = DecodeSHLightmap(bakedColor, shading.lightmapUV.xy, shading.normal, derivedLight);
                 #endif
-    
+
                 AOIrradiance = irradiance;
             #else
                 irradiance += bakedColor;
@@ -509,7 +570,7 @@ float3 evaluateIBL(const ShadingData shading, const MaterialData material, const
     float ltcgiSpecularIntensity = 0;
 
     LTCGI_Contribution(
-        /* in */ shading.position, 
+        /* in */ shading.position / _LTCGI_Scale.xyz, 
         /* in */ shading.normal, 
         /* in */ shading.view, 
         /* in */ pixel.perceptualRoughness, 
@@ -521,7 +582,7 @@ float3 evaluateIBL(const ShadingData shading, const MaterialData material, const
     );
 
     // Mix LTCGI spec in
-    Fr = lerp(Fr, specularEnergyConpensation * ltcgiSpecular, saturate(ltcgiSpecularIntensity));
+    Fr = lerp(Fr, specularEnergyConpensation * ltcgiSpecular * max(_LTCGI_Intensity.y, 0.01), saturate(ltcgiSpecularIntensity));
     
     #endif
     
@@ -540,9 +601,8 @@ float3 evaluateIBL(const ShadingData shading, const MaterialData material, const
             toonify(diffuseIrridiance) )
         + originalLumExtra;
     }
-
     #if LTCGI_ENABLED
-    diffuseIrridiance += ltcgiDiffuse;
+    diffuseIrridiance += ltcgiDiffuse * _LTCGI_Intensity.x;
     #endif
 
     float diffuseBRDF = singleBounceAO(diffuseAO);
@@ -556,14 +616,15 @@ float3 evaluateIBL(const ShadingData shading, const MaterialData material, const
     {
         PixelParams pixelForBakedSpecular = pixel;
 
-        // TODO: remap slightly
-        pixelForBakedSpecular.roughness = pixelForBakedSpecular.roughness;
+        pixelForBakedSpecular.roughness = remap(0,1,
+            1.f - min(_LightmapSpecularMaxSmoothness * 0.9f, 1.f),
+            saturate(1.f - min(_LightmapSpecularMaxSmoothness * 0.9f, 1.f) + MIN_ROUGHNESS),
+            pixelForBakedSpecular.roughness);
 
         if (any(derivedLight.NdotL))
         {
             color += surfaceShading(shading, pixelForBakedSpecular, derivedLight, 
-                                    // computeMicroShadowing(derivedLight.NdotL, material.ambientOcclusion * 0.8 + 0.3)
-                                    material.ambientOcclusion
+                                    computeMicroShadowing(derivedLight.NdotL, material.ambientOcclusion * min(diffuseAO, specularAO))
             );
         }
     }

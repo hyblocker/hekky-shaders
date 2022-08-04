@@ -7,8 +7,8 @@ MaterialData MaterialSetup(const v2f i)
 {
     MaterialData data;
 
-    float4 albedo = HEKKY_SAMPLE_TEX2D(_MainTex, i.uv.xy) * 0.8039216f;
-    data.baseColor = albedo.rgb * _Color;
+    float4 albedo = HEKKY_SAMPLE_TEX2D(_MainTex, i.uv.xy);
+    data.baseColor = albedo.rgb * _Color * 0.8039216f;
     data.alpha = albedo.a * _Color.a;
 
     // Default tangent normal
@@ -61,7 +61,7 @@ MaterialData MaterialSetup(const v2f i)
 }
 
 #if !SHADOW_CASTER
-#define INIT_SHADING_DATA(x) ShadingData x = SetupShadingData(i);
+#define INIT_SHADING_DATA(x, frontFace) ShadingData x = SetupShadingData(i, frontFace);
 
 // Unpacking the world position
 #if UNITY_REQUIRE_FRAG_WORLDPOS
@@ -76,20 +76,30 @@ MaterialData MaterialSetup(const v2f i)
     #define IN_WORLDPOS_FWDADD(i) half3(0,0,0)
 #endif
 
-ShadingData SetupShadingData(const v2f i)
+ShadingData SetupShadingData(const v2f i, const bool isFrontFace)
 {
     ShadingData shadingData = (ShadingData) 0;
 
-    shadingData.geometricNormal = normalize(i.normal.xyz);
-    shadingData.geometricTangent = normalize(i.tangent.xyz);
-    shadingData.binormal = normalize(i.binormal.xyz);
+    float normalSign = isFrontFace ? 1 : -1;
+
+    shadingData.geometricTangent        = normalSign * i.tangentToWorldAndPackedData[0].xyz;
+    shadingData.binormal                = normalSign * i.tangentToWorldAndPackedData[1].xyz;
+    shadingData.geometricNormal         = normalSign * i.tangentToWorldAndPackedData[2].xyz;
+
+    #if UNITY_TANGENT_ORTHONORMALIZE
+        // Taken from unity standard shader, this excerpt is licensed under MIT
+        shadingData.geometricNormal = NormalizePerPixelNormal(shadingData.geometricNormal);
+
+        // ortho-normalize Tangent
+        tangent = normalize (shadingData.geometricTangent - shadingData.geometricNormal * dot(shadingData.geometricTangent, shadingData.geometricNormal));
+
+        // recalculate Binormal
+        half3 newB = cross(shadingData.geometricNormal, shadingData.geometricTangent);
+        shadingData.binormal = newB * sign (dot (newB, shadingData.binormal));
+    #endif
     
     // Extract TBN matrix
     float3x3 tangentToWorld;
-    // tangentToWorld[0] = i.tangent.xyz;
-    // tangentToWorld[1] = i.binormal.xyz;
-    // tangentToWorld[2] = i.normal.xyz;
-    
     tangentToWorld[0] = shadingData.geometricTangent;
     tangentToWorld[1] = shadingData.binormal;
     tangentToWorld[2] = shadingData.geometricNormal;
@@ -98,7 +108,7 @@ ShadingData SetupShadingData(const v2f i)
     shadingData.normalizedViewportCoord = i.pos.xy * (0.5 / i.pos.w) + 0.5;
     shadingData.normal = shadingData.geometricNormal;
     shadingData.tangent = shadingData.geometricTangent;
-    shadingData.position = i.worldPos;
+    shadingData.position = float3(i.tangentToWorldAndPackedData[0].w, i.tangentToWorldAndPackedData[1].w, i.tangentToWorldAndPackedData[2].w);
     shadingData.view = -normalizePerPixelNormal(i.eyeVec);
     // shadingData.reflected = reflect(-shadingData.view, shadingData.normal);
 
@@ -130,7 +140,7 @@ ShadingData SetupShadingData(const v2f i)
         float2 matcapUV = getMatcapUV_ViewSpace(shadingData.position, shadingData.normal);
         matcapUV.x = remap( 0, 1, _MatcapBorder, 1.f - _MatcapBorder, matcapUV.x );
         matcapUV.y = remap( 0, 1, _MatcapBorder, 1.f - _MatcapBorder, matcapUV.y );
-        shadingData.matcapColor = HEKKY_SAMPLE_TEX2D(_MatcapTex, matcapUV).rgb;
+        shadingData.matcapColor = HEKKY_SAMPLE_TEX2D(_MatcapTex, matcapUV).rgb * _MatcapColor;
         
         shadingData.matcapBlend = HEKKY_SAMPLE_TEX2D_SAMPLER(_MatcapMask, i.uv, sampler_MainTex).r * _DoMatcap;
     }

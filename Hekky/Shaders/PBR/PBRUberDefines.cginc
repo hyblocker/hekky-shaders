@@ -30,7 +30,6 @@
 #include "PBRUberLighting.cginc"
 #include "PBRUberPassStructures.cginc"
 #include "PBRUberSetups.cginc"
-#include "PBRUberVRChat.cginc"
 
 // Outline only
 #if OUTLINE

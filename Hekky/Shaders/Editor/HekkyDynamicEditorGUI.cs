@@ -2,8 +2,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Debug = UnityEngine.Debug;
 
 namespace Hekky {
@@ -15,39 +17,42 @@ namespace Hekky {
 
         #region External Module Detection
 
+        // I don't use the #defines as due to how hacky setting them is they don't get removed if the user deletes a package
+        // So instead we query the asset database for the existence of some crucial file and assume the whole package is present if that's the case
+
         /// <summary>
         /// Whether Bakery is found in the current project
         /// </summary>
-#if BAKERY_INCLUDED
-        private const bool BAKERY_AVAILABLE = true;
-#else
-        private const bool BAKERY_AVAILABLE = false;
-#endif
+        private bool BAKERY_AVAILABLE => HGUI.BakeryImported;
 
         /// <summary>
         /// Whether LTCGI is found in the current project
         /// </summary>
-#if LTCGI_INCLUDED
-        private const bool LTCGI_AVAILABLE = true;
-#else
-        private const bool LTCGI_AVAILABLE = false;
-#endif
+        private bool LTCGI_AVAILABLE => HGUI.LTCGIImported;
 
         /// <summary>
         /// Whether AudioLink is found in the current project
         /// </summary>
-        private bool AUDIOLINK_AVAILABLE {
-            get { return HGUI.AudioLinkImported; }
-        }
+        private bool AUDIOLINK_AVAILABLE => HGUI.AudioLinkImported;
 
         #endregion
 
         #region UI Textures
 
-        private Texture2D iconPatreon = EditorGUIUtility.Load("Assets/Hekky/Textures/btn-patreon.png") as Texture2D;
-        private Texture2D iconDocs = EditorGUIUtility.Load("Assets/Hekky/Textures/btn-docs.png") as Texture2D;
-        private Texture2D iconDiscord = EditorGUIUtility.Load("Assets/Hekky/Textures/btn-discord.png") as Texture2D;
-        private Texture2D iconSearch = EditorGUIUtility.Load("Assets/Hekky/Textures/btn-search.png") as Texture2D;
+        private Texture2D iconPatreonDark   = HekkyUtil.FetchTexture2DByName("btn-patreon-dark");
+        private Texture2D iconDocsDark      = HekkyUtil.FetchTexture2DByName("btn-docs-dark");
+        private Texture2D iconDiscordDark   = HekkyUtil.FetchTexture2DByName("btn-discord-dark");
+        private Texture2D iconSearchDark    = HekkyUtil.FetchTexture2DByName("btn-search-dark");
+
+        private Texture2D iconPatreonLight   = HekkyUtil.FetchTexture2DByName("btn-patreon-light");
+        private Texture2D iconDocsLight      = HekkyUtil.FetchTexture2DByName("btn-docs-light");
+        private Texture2D iconDiscordLight   = HekkyUtil.FetchTexture2DByName("btn-discord-light");
+        private Texture2D iconSearchLight    = HekkyUtil.FetchTexture2DByName("btn-search-light");
+
+        private Texture2D iconPatreon   { get { return EditorGUIUtility.isProSkin ? iconPatreonLight : iconPatreonDark; } }
+        private Texture2D iconDocs      { get { return EditorGUIUtility.isProSkin ? iconDocsLight : iconDocsDark; } }
+        private Texture2D iconDiscord   { get { return EditorGUIUtility.isProSkin ? iconDiscordLight : iconDiscordDark; } }
+        private Texture2D iconSearch    { get { return EditorGUIUtility.isProSkin ? iconSearchLight : iconSearchDark; } }
 
         #endregion
 
@@ -59,7 +64,7 @@ namespace Hekky {
         private MaterialProperty BlendModeUnityProp;
         private MaterialEditor materialEditor;
         private Material material;
-        private Stack<HekkyShaderFoldout> foldoutStack = new Stack<HekkyShaderFoldout>();
+        private Queue<HekkyShaderFoldout> foldoutQueue = new Queue<HekkyShaderFoldout>();
         private int foldoutsToClose;
 
         private Dictionary<int, MaterialProperty> incorrectlyConfiguredTextureCount =
@@ -74,7 +79,7 @@ namespace Hekky {
             material = ( Material ) materialEditor.target;
             title = material.shader.name;
             this.materialEditor = materialEditor;
-            foldoutStack.Clear();
+            foldoutQueue.Clear();
             foldoutsToClose = 0;
             incorrectlyConfiguredTextureCount.Clear();
 
@@ -113,7 +118,7 @@ namespace Hekky {
             RenderPropsRecursive(hekkyProps);
 
 #if HEKKY_DBG
-            if (HGUI.CollapsingHeader("Default inspector")) {
+            if ( HGUI.CollapsingHeader("Default inspector") ) {
                 HGUI.BeginGroup();
                 base.OnGUI(materialEditor, properties);
                 HGUI.EndGroup();
@@ -177,7 +182,7 @@ namespace Hekky {
 
         private void DoHeader() {
             HGUI.Title(title);
-            // TODO: Version
+            HGUI.Version(version);
         }
 
         private void DoFooter() {
@@ -239,12 +244,12 @@ namespace Hekky {
         }
 
         private bool EnsureFoldoutIsRendered() {
-            if ( foldoutStack.Count > 0 ) {
-                var foldout = foldoutStack.Peek();
+            if ( foldoutQueue.Count > 0 ) {
+                var foldout = foldoutQueue.Peek();
                 bool doFoldout = HGUI.CollapsingHeader(foldout.displayName);
                 foldout.unityInternalProperty.floatValue = doFoldout ? 1 : 0;
                 if ( foldout.unityInternalProperty.floatValue == 1.0f ) {
-                    foldoutStack.Pop();
+                    foldoutQueue.Dequeue();
                     HGUI.BeginGroup();
                     foldoutsToClose++;
                 }
@@ -254,7 +259,61 @@ namespace Hekky {
 
             return false;
         }
+        
+        
 
+        static string GetIntBinaryString(int n)
+        {
+            char[] b = new char[32];
+            int pos = 31;
+            int i = 0;
+
+            while (i < 32)
+            {
+                if ((n & (1 << i)) != 0)
+                    b[pos] = '1';
+                else
+                    b[pos] = '0';
+                pos--;
+                i++;
+            }
+            return new string(b);
+        }
+        
+        private void DrawTextureWithOtherProp(GUIContent content, MaterialProperty textureProp, HekkyMaterialProperty inlineProp) {
+            
+            EditorGUILayout.BeginHorizontal();
+            // If this texture is a normal map, FUCK
+            if ( ( textureProp.flags & MaterialProperty.PropFlags.Normal ) != 0 ) {
+                materialEditor.TexturePropertySingleLine(content, textureProp, inlineProp.unityInternalProperty);
+            } else {
+                materialEditor.TexturePropertySingleLine(content, textureProp, inlineProp.unityInternalProperty);
+            }
+            var mainRect = GUILayoutUtility.GetLastRect();
+            var rect = EditorGUILayout.GetControlRect(GUILayout.Width(14), GUILayout.Height(11), GUILayout.ExpandHeight(true));
+            rect.y = mainRect.yMax - rect.height;
+            if (GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton)) {
+                materialEditor.RegisterPropertyChangeUndo("Reset value");
+                switch ( inlineProp.unityInternalProperty.type ) {
+                    case MaterialProperty.PropType.Vector:
+                        Vector4 defaultVector = material.shader.GetPropertyDefaultVectorValue(inlineProp.index);
+                        inlineProp.unityInternalProperty.vectorValue = defaultVector;
+                        break;
+                    case MaterialProperty.PropType.Color:
+                        Vector4 defaultColor = material.shader.GetPropertyDefaultVectorValue(inlineProp.index);
+                        inlineProp.unityInternalProperty.colorValue = new Color(defaultColor.x, defaultColor.y, defaultColor.z, defaultColor.w);
+                        break;
+                    case MaterialProperty.PropType.Range:
+                    case MaterialProperty.PropType.Float:
+                        float defaultValue = material.shader.GetPropertyDefaultFloatValue(inlineProp.index);
+                        inlineProp.unityInternalProperty.floatValue = defaultValue;
+                        break;
+                }
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+
+        // Thanks orels1 for the reset button!
         private bool DrawPropInternal(HekkyMaterialProperty prop) {
             bool ignoreProp = HekkyUtil.TestBitwiseFlag(prop.unityInternalProperty.flags,
                 MaterialProperty.PropFlags.HideInInspector);
@@ -363,18 +422,38 @@ namespace Hekky {
                         propertyMap[prop.unityInternalProperty.name].sameLine.unityInternalProperty;
 
                     if ( sameLineUnityInternalProp.type == MaterialProperty.PropType.Texture ) {
-                        materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
-                            sameLineUnityInternalProp, prop.unityInternalProperty);
-                        if ( doLinearProp )
-                            LinearWarning(sameLineUnityInternalProp);
-                    } else if ( prop.unityInternalProperty.type == MaterialProperty.PropType.Texture ) {
-                        materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
-                            prop.unityInternalProperty, sameLineUnityInternalProp);
-                        if ( doLinearProp )
+                        
+                        
+                        // materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
+                        //    sameLineUnityInternalProp, prop.unityInternalProperty);
+                        
+                        DrawTextureWithOtherProp(EditorGUIUtility.TrTextContent(prop.displayName),
+                            sameLineUnityInternalProp, propertyMap[prop.unityInternalProperty.name].sameLine);
+                        
+                        
+                        if ( doLinearProp ) {
                             LinearWarning(prop.unityInternalProperty);
+                        }
+                    } else if ( prop.unityInternalProperty.type == MaterialProperty.PropType.Texture ) {
+                        
+                        
+                        // materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
+                        //    prop.unityInternalProperty, sameLineUnityInternalProp);
+                        
+                        DrawTextureWithOtherProp(EditorGUIUtility.TrTextContent(prop.displayName),
+                            prop.unityInternalProperty, propertyMap[prop.unityInternalProperty.name].sameLine);
+
+
+                        if ( doLinearProp ) {
+                            LinearWarning(prop.unityInternalProperty);
+                        }
                     } else
+                    
                         materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
+                    
                 } else {
+                    Rect mainRect;
+                    Rect rect;
                     switch ( prop.unityInternalProperty.type ) {
                         case MaterialProperty.PropType.Texture:
                             materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
@@ -382,24 +461,80 @@ namespace Hekky {
                             if ( doLinearProp )
                                 LinearWarning(prop.unityInternalProperty);
                             break;
+                        
                         case MaterialProperty.PropType.Vector:
                             if ( sliderCount > 0 ) {
                                 Vector4 vecVal = prop.unityInternalProperty.vectorValue;
+                                Vector4 defaultVector = material.shader.GetPropertyDefaultVectorValue(prop.index);
 
                                 for ( int i = 0; i < sliderCount; i++ ) {
+                                    EditorGUILayout.BeginHorizontal();
+                                    
                                     vecVal[i] = DoSlider(
                                         sliderNames[i].Length == 0
                                             ? $"{prop.displayName} {IndexToVecComponentString(sliderComponent[i])}"
                                             : sliderNames[i],
                                         vecVal[i], sliderRange[i].x, sliderRange[i].y);
+                                    
+                                    mainRect = GUILayoutUtility.GetLastRect();
+                                    rect = EditorGUILayout.GetControlRect(GUILayout.Width(14), GUILayout.Height(11), GUILayout.ExpandHeight(true));
+                                    rect.y = mainRect.yMax - rect.height;
+                                    if (GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton)) {
+                                        materialEditor.RegisterPropertyChangeUndo("Reset value");
+                                        vecVal[i] = defaultVector[i];
+                                    }
+                                    EditorGUILayout.EndHorizontal();
                                 }
 
                                 prop.unityInternalProperty.vectorValue = vecVal;
                             } else {
+                                EditorGUILayout.BeginHorizontal();
                                 materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
+                                mainRect = GUILayoutUtility.GetLastRect();
+                                rect = EditorGUILayout.GetControlRect(GUILayout.Width(14), GUILayout.Height(11), GUILayout.ExpandHeight(true));
+                                rect.y = mainRect.yMax - rect.height;
+                                if (GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton)) {
+                                    materialEditor.RegisterPropertyChangeUndo("Reset value");
+                                    Vector4 defaultVector = material.shader.GetPropertyDefaultVectorValue(prop.index);
+                                    prop.unityInternalProperty.vectorValue = defaultVector;
+                                }
+                                EditorGUILayout.EndHorizontal();
                             }
 
                             break;
+                        case MaterialProperty.PropType.Color:
+                            
+                            EditorGUILayout.BeginHorizontal();
+                            materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
+                            mainRect = GUILayoutUtility.GetLastRect();
+                            rect = EditorGUILayout.GetControlRect(GUILayout.Width(14), GUILayout.Height(11), GUILayout.ExpandHeight(true));
+                            rect.y = mainRect.yMax - rect.height;
+                            if (GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton)) {
+                                materialEditor.RegisterPropertyChangeUndo("Reset value");
+                                Vector4 defaultColor = material.shader.GetPropertyDefaultVectorValue(prop.index);
+                                prop.unityInternalProperty.colorValue = new Color(defaultColor.x, defaultColor.y, defaultColor.z, defaultColor.w);
+                            }
+                            EditorGUILayout.EndHorizontal();
+                            break;
+                        
+                        case MaterialProperty.PropType.Range:
+                        case MaterialProperty.PropType.Float:
+                            
+                            EditorGUILayout.BeginHorizontal();
+                            materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
+                            mainRect = GUILayoutUtility.GetLastRect();
+                            rect = EditorGUILayout.GetControlRect(GUILayout.Width(14), GUILayout.Height(11), GUILayout.ExpandHeight(true));
+                            rect.y = mainRect.yMax - rect.height;
+                            if (GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton)) {
+                                materialEditor.RegisterPropertyChangeUndo("Reset value");
+                                float defaultValue = material.shader.GetPropertyDefaultFloatValue(prop.index);
+                                prop.unityInternalProperty.floatValue = defaultValue;
+                            }
+                            EditorGUILayout.EndHorizontal();
+                            
+                            break;
+
+                        // TODO: More props
                         default:
                             materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
                             break;
@@ -430,7 +565,7 @@ namespace Hekky {
                 var foldout = ( HekkyShaderFoldout ) prop;
 
                 // TODO: Foldout stack so that empty foldouts don't render
-                foldoutStack.Push(foldout);
+                foldoutQueue.Enqueue(foldout);
 
                 // bool doFoldout = HGUI.CollapsingHeader(foldout.displayName);
                 // prop.unityInternalProperty.floatValue = doFoldout ? 1 : 0;
@@ -547,8 +682,8 @@ namespace Hekky {
                 }
             }
 
-            if ( foldoutStack.Count > 0 ) {
-                foldoutStack.Pop();
+            if ( foldoutQueue.Count > 0 ) {
+                foldoutQueue.Dequeue();
             } else if ( foldoutsToClose > 0 ) {
                 HGUI.EndGroup();
                 foldoutsToClose--;
@@ -570,6 +705,7 @@ namespace Hekky {
             foldout.properties = Array.Empty<HekkyShaderToken>();
             foldout.displayName = displayName;
             foldout.unityInternalProperty = foldoutRoot;
+            foldout.index = -1;
 
             List<HekkyMaterialProperty> hekkyProps = new List<HekkyMaterialProperty>();
 
@@ -580,6 +716,7 @@ namespace Hekky {
                 bool textureIsLinear = false;
                 var currProp = new HekkyMaterialProperty();
                 currProp.unityInternalProperty = properties[i];
+                currProp.index = material.shader.FindPropertyIndex(properties[i].name);
 
                 // Get tokens
                 string[] propertyTokens = properties[i].displayName.Split(PROPERTY_SEPARATOR);
@@ -596,7 +733,8 @@ namespace Hekky {
                         continue;
 
                     var token = new HekkyShaderToken {
-                        propertyType = HekkyShaderProperty.Unknown, propertyRaw = propertyTokens[j]
+                        propertyType = HekkyShaderProperty.Unknown,
+                        propertyRaw = propertyTokens[j]
                     };
 
                     int indexOfOpeningBracket = propertyTokens[j].IndexOf('(');
@@ -650,15 +788,15 @@ namespace Hekky {
                             // String value, trim quotes
                             case "version":
                                 token.propertyType = HekkyShaderProperty.Version;
-                                token.values = new object[] {methodProps.Trim('\'')};
+                                token.values = new object[] { methodProps.Trim('\'') };
                                 break;
                             case "title":
                                 token.propertyType = HekkyShaderProperty.Title;
-                                token.values = new object[] {methodProps.Trim('\'')};
+                                token.values = new object[] { methodProps.Trim('\'') };
                                 break;
                             case "docsURL":
                                 token.propertyType = HekkyShaderProperty.DocsURL;
-                                token.values = new object[] {methodProps.Trim('\'')};
+                                token.values = new object[] { methodProps.Trim('\'') };
                                 break;
 
                             case "doHeader":
@@ -697,7 +835,7 @@ namespace Hekky {
                                 token.propertyType = HekkyShaderProperty.DisableIfNot;
                                 // Default value :: 1
                                 if ( token.values.Length == 1 ) {
-                                    token.values = new[] {token.values[0], "1"};
+                                    token.values = new[] { token.values[0], "1" };
                                 }
 
                                 break;
@@ -705,7 +843,7 @@ namespace Hekky {
                                 token.propertyType = HekkyShaderProperty.HideIfNot;
                                 // Default value :: 1
                                 if ( token.values.Length == 1 ) {
-                                    token.values = new[] {token.values[0], "1"};
+                                    token.values = new[] { token.values[0], "1" };
                                 }
 
                                 break;
@@ -938,6 +1076,11 @@ namespace Hekky {
         /// The raw <see cref="MaterialProperty"/> used by Unity
         /// </summary>
         public MaterialProperty unityInternalProperty;
+
+        /// <summary>
+        /// The index of the material property
+        /// </summary>
+        public int index;
     }
 
     struct HekkyShaderToken {

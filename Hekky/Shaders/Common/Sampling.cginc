@@ -23,6 +23,22 @@
 #define HEKKY_SAMPLE_TEX2DARR_SAMPLER(tex, coord, sampler)                          tex.Sample(sampler, coord)
 #define HEKKY_SAMPLE_TEX2DARR_SAMPLER_LOD(tex, coord, sampler, lod)                 tex.Sample(sampler, coord, lod)
 
+#define HEKKY_DECLARE_TEX3D(tex)                                                    Texture3D tex; SamplerState sampler##tex
+#define HEKKY_DECLARE_TEX3D_NOSAMPLER(tex)                                          Texture3D tex
+
+#define HEKKY_SAMPLE_TEX3D(tex, coord)                                              tex.Sample(sampler##tex, coord)
+#define HEKKY_SAMPLE_TEX3D_LOD(tex, coord, lod)                                     tex.Sample(sampler##tex, coord, lod)
+#define HEKKY_SAMPLE_TEX3D_SAMPLER(tex, coord, sampler)                             tex.Sample(sampler, coord)
+#define HEKKY_SAMPLE_TEX3D_SAMPLER_LOD(tex, coord, sampler, lod)                    tex.Sample(sampler, coord, lod)
+
+#define HEKKY_DECLARE_TEX_CUBE(tex)                                                 TextureCube tex; SamplerState sampler##tex
+#define HEKKY_DECLARE_TEX_CUBE_NOSAMPLER(tex)                                       TextureCube tex
+
+#define HEKKY_SAMPLE_TEX_CUBE(tex, coord)                                           tex.Sample(sampler##tex, coord)
+#define HEKKY_SAMPLE_TEX_CUBE_LOD(tex, coord, lod)                                  tex.Sample(sampler##tex, coord, lod)
+#define HEKKY_SAMPLE_TEX_CUBE_SAMPLER(tex, coord, sampler)                          tex.Sample(sampler, coord)
+#define HEKKY_SAMPLE_TEX_CUBE_SAMPLER_LOD(tex, coord, sampler, lod)                 tex.Sample(sampler, coord, lod)
+
 #if defined(SHADER_API_D3D11) || defined(SHADER_API_GLCORE)
 #define HEKKY_LOD_TEX2D(tex, coord)                                                 tex.CalculateLevelOfDetail (sampler##tex,coord)
 #else
@@ -128,6 +144,8 @@ inline float4 SampleTexture2DEdgePreserving(TEXTURE2D_ARGS(tex, smp), float2 coo
 // They will sample using bicubic sampling on DX11
 // They also remove the necessity of manually sampling the textures yourself
 
+#ifndef NO_LIGHTMAP
+
 inline float4 SampleLightmapBicubic(float2 uv)
 {
     #ifdef SHADER_API_D3D11
@@ -180,6 +198,8 @@ inline float4 SampleDynamicLightmapDirBicubic(float2 uv)
         return HEKKY_SAMPLE_TEX2D_SAMPLER(unity_DynamicDirectionality, samplerunity_DynamicLightmap, uv);
     #endif
 }
+
+#endif
 
 // =====================================================================================================
 //                                           SPHERICAL HARMONICS

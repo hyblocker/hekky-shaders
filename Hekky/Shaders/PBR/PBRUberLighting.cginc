@@ -28,7 +28,7 @@ PixelParams getPixelParams(const ShadingData shading, const MaterialData materia
 
     const float perceptualRoughness = normalFiltering(material.roughness, shading.geometricNormal);
     // minimum roughness, as 0 roughness breaks GGX 
-    pixel.perceptualRoughness = max(perceptualRoughness, MIN_ROUGHNESS);
+    pixel.perceptualRoughness = max(perceptualRoughness, MIN_PERCEPTUAL_ROUGHNESS);
     pixel.roughness = pixel.perceptualRoughness * pixel.perceptualRoughness;
 
     pixel.aniso = material.aniso;

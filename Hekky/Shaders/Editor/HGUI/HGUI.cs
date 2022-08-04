@@ -51,6 +51,10 @@ namespace Hekky {
         public static void Title(string shaderTitle) {
             EditorGUILayout.LabelField(shaderTitle, ShaderTitle);
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void Version(string versionString) {
+            EditorGUILayout.LabelField(versionString, VersionTitle);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Header(string shaderTitle) {

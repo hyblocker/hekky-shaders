@@ -6,10 +6,14 @@
 // DFG
 HEKKY_DECLARE_TEX2D(_DFG);
 
+// Access the current blendmode
+float _Mode;
+
 // Albedo
 HEKKY_DECLARE_TEX2D(_MainTex);
 float4 _MainTex_ST, _MainTex_TexelSize;
 float4 _Color;
+float _AlphaClip;
 
 HEKKY_DECLARE_TEX2D_NOSAMPLER(_BumpMap);
 float _BumpScale;
@@ -40,6 +44,7 @@ int _LightingShadows = 0; // 0 => Off ; 1 => On
 // Specular
 int _SpecularMode = 0; // 0 => Isotropic ; 1 => Anisotropic
 int _LightmapSpecular = 0; // Baked lighting specular
+float _LightmapSpecularMaxSmoothness = 0; // Baked lighting max specular smoothness
 float _Specular;
 float4 _SpecularTint;
 float _AnisoStrength; // aniso XY
@@ -71,6 +76,7 @@ float _EnableNormalReproj, _NormalReprojBlend;
 
 // Matcaps
 int _DoMatcap;
+float3 _MatcapColor;
 HEKKY_DECLARE_TEX2D(_MatcapTex);
 HEKKY_DECLARE_TEX2D_NOSAMPLER(_MatcapMask);
 float _MatcapBorder;
@@ -93,5 +99,9 @@ HEKKY_DECLARE_TEX2D(_RNM0);
 HEKKY_DECLARE_TEX2D_NOSAMPLER(_RNM1);
 HEKKY_DECLARE_TEX2D_NOSAMPLER(_RNM2);
 #endif
+
+// LTCGI
+float3 _LTCGI_Scale;
+float2 _LTCGI_Intensity;
 
 #endif

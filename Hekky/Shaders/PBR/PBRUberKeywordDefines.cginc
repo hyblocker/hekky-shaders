@@ -1,7 +1,8 @@
 ﻿#ifndef HEKKY_PBR_UBER_KEYWORD_DEFS
 #define HEKKY_PBR_UBER_KEYWORD_DEFS
 
-#define MIN_ROUGHNESS 0.045
+#define MIN_PERCEPTUAL_ROUGHNESS 0.045
+#define MIN_ROUGHNESS 0.002025
 
 #define FORWARD_BASE defined(UNITY_PASS_FORWARDBASE)
 #define FORWARD_ADD defined(UNITY_PASS_FORWARDADD)
@@ -44,7 +45,7 @@
 #define SAMPLE_LIGHTMAP (defined(LIGHTMAP_ON))
 #define SAMPLE_DYNAMICLIGHTMAP (defined(DYNAMICLIGHTMAP_ON))
 #define HAS_LIGHTMAP (defined(LIGHTMAP_ON) || defined(DYNAMICLIGHTMAP_ON))
-#define BAKERY_AVAILABLE (defined(_BAKERY_RNM) || defined(_BAKERY_SH))
+#define BAKERY_AVAILABLE (defined(_BAKERY_RNM) || defined(_BAKERY_SH) || defined(_BAKERY_MONOSH))
 // Spherical harmonics non-linear samples spherical harmonic lightmaps in gamma space. In Bakery's default shaders this
 // is togglable via a toggle but since we are dealing with VRChat, I'm going to assume that you're using gamma space
 // spherical harmonic lightmaps if you're using gamma space rendering (why would you even though)

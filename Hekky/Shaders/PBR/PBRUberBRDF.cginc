@@ -1,7 +1,6 @@
 #ifndef HEKKY_PBR_UBER_BSDF
 #define HEKKY_PBR_UBER_BSDF
 
-#define PI 3.14159265358979323846
 // Constant Fresnel incidence for non-metals
 #define Fdielectric 0.04
 
@@ -152,7 +151,6 @@ inline float3 surfaceShading(const ShadingData shading, const PixelParams pixel,
     
     UNITY_BRANCH
     if (LIGHTING_MODE_TOON) {
-		
         shadowTerm = lerp ( _ToonMathGradientBrightnessRemapped.x, _ToonMathGradientBrightnessRemapped.y, toonify(shadowTerm) );
     } else if (LIGHTING_MODE_UNLIT) {
         shadowTerm = 1;

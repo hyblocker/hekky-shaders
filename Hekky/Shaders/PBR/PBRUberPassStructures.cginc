@@ -27,15 +27,15 @@ struct v2f
     half4 ambientOrLightmapUV               : TEXCOORD2_centroid;   // SH or Lightmap UV
         
     float4 eyeVec                           : TEXCOORD3;            // eyeVector.xyz | fogCoord
-    // float4 tangentToWorldAndPackedData[3]   : TEXCOORD4;            //
-    float3 normal                           : TEXCOORD4;
-    float4 tangent                          : TEXCOORD5;
-    float3 binormal                         : TEXCOORD6;
+    float4 tangentToWorldAndPackedData[3]   : TEXCOORD4;            //
+    // float3 normal                           : TEXCOORD4;
+    // float4 tangent                          : TEXCOORD5;
+    // float3 binormal                         : TEXCOORD6;
     UNITY_LIGHTING_COORDS(7, 8)
         
     // next ones would not fit into SM2.0 limits, but they are always for SM3.0+
     // #if UNITY_REQUIRE_FRAG_WORLDPOS && !UNITY_PACK_WORLDPOS_WITH_TANGENT
-    float3 worldPos                         : TEXCOORD9;
+    // float3 worldPos                         : TEXCOORD9;
     // #endif
 
     UNITY_VERTEX_INPUT_INSTANCE_ID

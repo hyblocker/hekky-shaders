@@ -43,4 +43,12 @@ inline float Occlusion(const float2 uv)
     return LerpOneTo(occlusion, _OcclusionStrength);
 }
 
+inline float computeMicroShadowing(const float NdotL, const float visibility)
+{
+    // "Material Advances in Call of Duty: WWII"
+    const float aperture = rsqrt(1.f - visibility);
+    const float microShadow = saturate(NdotL * aperture);
+    return microShadow * microShadow;
+}
+
 #endif // HEKKY_PBR_UBER_AMBIENT_OCCLUSION
