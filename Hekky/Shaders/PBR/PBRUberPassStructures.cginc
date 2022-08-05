@@ -34,9 +34,9 @@ struct v2f
     UNITY_LIGHTING_COORDS(7, 8)
         
     // next ones would not fit into SM2.0 limits, but they are always for SM3.0+
-    // #if UNITY_REQUIRE_FRAG_WORLDPOS && !UNITY_PACK_WORLDPOS_WITH_TANGENT
-    // float3 worldPos                         : TEXCOORD9;
-    // #endif
+    #if UNITY_REQUIRE_FRAG_WORLDPOS && !UNITY_PACK_WORLDPOS_WITH_TANGENT
+    float3 posWorld                         : TEXCOORD9;
+    #endif
 
     UNITY_VERTEX_INPUT_INSTANCE_ID
     UNITY_VERTEX_OUTPUT_STEREO
