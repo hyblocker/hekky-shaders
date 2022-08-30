@@ -66,6 +66,8 @@
 
 #define OUTLINE_ENABLED (_DoOutline == 1)
 
+#define SUBSURFACE_SCATTERING (defined(_SUBSURFACE_SCATTERING))
+
 /*
 
 // Unity Standard Shader Keywords

@@ -60,16 +60,9 @@ float _AnisoAngleOffset;
 #endif
 
 // Toon
-float _MathGradientStart, _MathGradientEnd;
-// Remapped
-static float2 _MathGradientRemapped = float2(
-    // Lerp bc if we don't remap the start and end to start at some delta,
-    // parts which are lit would have specular lighting instead of just being lit
-            lerp( 0.033, 1.0, _MathGradientStart),
-            lerp( 0.033, 1.0, _MathGradientEnd )
-        );
-float _ToonMathGradientMaxBrightness, _ToonMathGradientMinBrightness;
-static float2 _ToonMathGradientBrightnessRemapped = float2 ( _ToonMathGradientMinBrightness * 0.5, _ToonMathGradientMaxBrightness * 0.5 );
+float2 _ToonMathGradientDiffuse;
+float2 _ToonMathGradientSpecular;
+float2 _ToonMathGradientBrightness;
 
 // Normal reprojection
 float _EnableNormalReproj, _NormalReprojBlend;
@@ -92,6 +85,15 @@ int _EmissionAudioLinkMultiplyChannel;
 float2 _EmissionAudioLinkMultiplyRange;
 int _EmissionAudioLinkAddChannel;
 float2 _EmissionAudioLinkAddRange;
+
+#if SUBSURFACE_SCATTERING
+
+float _SSSVisibility;
+HEKKY_DECLARE_TEX2D_NOSAMPLER(_SSSMap);
+float3 _SSSColor;
+float _SSSIntensity;
+
+#endif
 
 #if BAKERY_ENABLED
 // Declare bakery textures

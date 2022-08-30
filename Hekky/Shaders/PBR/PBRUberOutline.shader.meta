@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: 3c530105c75dc724a81260f5240fc38d
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures:
+  - _MainTex: {instanceID: 0}
+  - _MetallicGlossMap: {instanceID: 0}
+  - _SpecGlossMap: {instanceID: 0}
+  - _BumpMap: {instanceID: 0}
+  - _AnisoMap: {instanceID: 0}
+  - _EmissionMap: {instanceID: 0}
+  - _MatcapTex: {instanceID: 0}
+  - _MatcapMask: {instanceID: 0}
+  - _OcclusionMap: {instanceID: 0}
+  - _RNM0: {instanceID: 0}
+  - _RNM1: {instanceID: 0}
+  - _RNM2: {instanceID: 0}
+  nonModifiableTextures:
+  - _DFG: {fileID: 2800000, guid: d3d38ef6596422f4e9cbfe19f7ba0773, type: 3}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

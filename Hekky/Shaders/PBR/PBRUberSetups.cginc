@@ -1,4 +1,5 @@
 #ifndef HEKKY_PBR_UBER_SETUPS
+
 #define HEKKY_PBR_UBER_SETUPS
 
 #define MATERIAL_SETUP(x) MaterialData x = MaterialSetup(i);
@@ -13,7 +14,7 @@ MaterialData MaterialSetup(const v2f i)
 
     // Default tangent normal
     #ifdef _NORMALMAP
-        data.normal = UnpackScaleNormal(HEKKY_SAMPLE_TEX2D_SAMPLER(_BumpMap, i.uv.xy, sampler_MainTex), _BumpScale);
+    data.normal = UnpackScaleNormal(HEKKY_SAMPLE_TEX2D_SAMPLER(_BumpMap, i.uv.xy, sampler_MainTex), _BumpScale);
     #else
         data.normal = half3(0,0, _BumpScale);
     #endif
@@ -35,9 +36,15 @@ MaterialData MaterialSetup(const v2f i)
     data.aniso = anisoMap.r * _AnisoStrength;
     data.anisoAngle = anisoMap.g + _AnisoAngleOffset;
 
-    // TODO: More props
-    data.subsurface.color = (float3) 0;
-    data.subsurface.thickness = 1.0;
+    data.subsurface = (SubsurfaceData)0;
+    
+    #if SUBSURFACE_SCATTERING
+
+    data.subsurface.color = _SSSColor;
+    data.subsurface.thickness = HEKKY_SAMPLE_TEX2D_SAMPLER(_SSSMap, i.uv.xy, sampler_MainTex).r * _SSSVisibility;
+    data.subsurface.intensity = _SSSIntensity;
+
+    #endif
     
     data.emission.color = _EmissionColor.rgb * HEKKY_SAMPLE_TEX2D_SAMPLER(_EmissionMap, i.uv.xy, sampler_MainTex);
     data.emission.intensity = _EmissionIntensity;

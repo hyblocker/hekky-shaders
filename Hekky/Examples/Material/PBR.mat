@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: PBR
   m_Shader: {fileID: 4800000, guid: de0b734b74e3ba84f9b7566dbe56016a, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: _BAKERY_NONE _REFLECTIONSFORCEDMODE_DEFAULT
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -32,6 +32,10 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionPathingTexture:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
@@ -67,69 +71,109 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _SSSMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ShadowColor1Tex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ShadowColor2Tex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _SpecGlossMap:
         m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _SubpixelMask:
+        m_Texture: {fileID: 2800000, guid: 3c62ea8b5b6e6014f890230924d7c9ec, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - _AlphaClip: 0.5
     - _AnisoAngleOffset: 0
     - _AnisoStrength: 0
+    - _Aspect: 1.777777
     - _AudioLink: 0
     - _AudioLinkDebug: 0
     - _AudioLinkDebugBass: 0
     - _AudioLinkDebugHighMid: 0
     - _AudioLinkDebugLowMid: 0
     - _AudioLinkDebugTreble: 0
+    - _Backlight: 0.003
     - _Bakery: 0
     - _BlendModes: 0
     - _BumpScale: 1
     - _CullMode: 2
+    - _DetailLighting: 0
     - _DoMatcap: 0
-    - _DoOutline: 0
+    - _DoOutline: 1
+    - _DoSSS: 0
+    - _DoSubsurf: 0
     - _DstBlend: 0
     - _EmissionAudioLinkAddChannel: 0
     - _EmissionAudioLinkChannel: 0
     - _EmissionAudioLinkMultiplyChannel: 0
+    - _EmissionAudioLinkPathingBandA: 3
+    - _EmissionAudioLinkPathingBandB: 2
+    - _EmissionAudioLinkPathingBandG: 1
+    - _EmissionAudioLinkPathingBandR: 0
     - _EmissionAudioLinkRange: 0
     - _EmissionIntensity: 1
     - _EnableNormalReproj: 0
     - _ExposureOcclusion: 0.2
+    - _FlipBackside: 0
+    - _FlipInMirrors: 0
     - _FoldoutAdvancedBegin: 0
     - _FoldoutAdvancedEnd: 0
     - _FoldoutAnisoBegin: 0
     - _FoldoutAnisoEnd: 0
     - _FoldoutAudioLinkDebugBegin: 0
     - _FoldoutAudioLinkDebugEnd: 0
+    - _FoldoutDisplayBegin: 0
+    - _FoldoutDisplayEnd: 0
     - _FoldoutEmissionAudioLinkBegin: 1
     - _FoldoutEmissionAudioLinkEnd: 0
-    - _FoldoutEmissionBegin: 1
+    - _FoldoutEmissionBegin: 0
     - _FoldoutEmissionEnd: 0
     - _FoldoutExternalModulesBegin: 0
     - _FoldoutExternalModulesEnd: 0
     - _FoldoutLTCGIConfigBegin: 0
     - _FoldoutLTCGIConfigEnd: 0
-    - _FoldoutLightingBegin: 0
+    - _FoldoutLightingBegin: 1
     - _FoldoutLightingEnd: 0
     - _FoldoutMainBegin: 1
     - _FoldoutMainEnd: 0
-    - _FoldoutMatcapBegin: 1
+    - _FoldoutMatcapBegin: 0
     - _FoldoutMatcapEnd: 0
     - _FoldoutNormalReprojectionBegin: 0
     - _FoldoutNormalReprojectionEnd: 0
-    - _FoldoutOcclusionBegin: 0
+    - _FoldoutOcclusionBegin: 1
     - _FoldoutOcclusionEnd: 0
     - _FoldoutOutlineBegin: 0
     - _FoldoutOutlineEnd: 0
-    - _FoldoutReflectionsBegin: 1
+    - _FoldoutReflectionsBegin: 0
     - _FoldoutReflectionsEnd: 0
-    - _FoldoutSpecularBegin: 1
+    - _FoldoutShadowBegin: 0
+    - _FoldoutShadowEnd: 0
+    - _FoldoutSpecularBegin: 0
     - _FoldoutSpecularEnd: 0
+    - _FoldoutStrobingBegin: 0
+    - _FoldoutStrobingEnd: 0
+    - _FoldoutSubsurfaceBegin: 1
+    - _FoldoutSubsurfaceEnd: 0
+    - _FoldoutSubsurfaceScatteringBegin: 0
+    - _FoldoutSubsurfaceScatteringEnd: 0
     - _FoldoutToonBegin: 0
     - _FoldoutToonEnd: 0
     - _Footer: 0
     - _Glossiness: 1
+    - _Grayscale: 0
     - _Header: 0
+    - _IndirectBlend: 1
+    - _IndirectIntensity: 1
     - _InvertGlossiness: 0
     - _LTCGI: 0
     - _LightingMode: 0
@@ -146,16 +190,35 @@ Material:
     - _MatcapReplaceBlend: 1
     - _MathGradientEnd: 1
     - _MathGradientStart: 0
+    - _MaxLightIntensity: 2
     - _Metallic: 0
     - _MiscView: 0
     - _Mode: 0
     - _NormalReprojBlend: 1
     - _OcclusionStrength: 1
-    - _OutlineWidth: 0
+    - _OutlineWidth: 15.67
     - _ReflectionsForcedMode: 0
+    - _SSSIntensity: 0.15
+    - _SSSMaxLightIntensity: 1
+    - _SSSPower: 0.3
+    - _SSSVisibility: 0
+    - _ShadowBlur1: 0
+    - _ShadowBlur2: 0
+    - _ShadowBorder1: 0
+    - _ShadowBorder2: 0
+    - _SnapToSubpixels: 0
+    - _Spacing0: 0
+    - _Spacing2: 0
+    - _Spacing3: 0
     - _Specular: 0
     - _SpecularMode: 0
     - _SrcBlend: 1
+    - _StrobeInCamera: 0
+    - _StrobeMinLight: 0.198
+    - _StrobePeriod: 1.76
+    - _StrobeSize: 0.84
+    - _StrobeSpeed: 0.27
+    - _Subsurface: 0
     - _ToonMathGradientMaxBrightness: 1
     - _ToonMathGradientMinBrightness: 0
     - _Version: 1
@@ -166,10 +229,23 @@ Material:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionAudioLinkAddRange: {r: 0, g: 0, b: 0, a: 0}
     - _EmissionAudioLinkMultiplyRange: {r: 0, g: 1, b: 0, a: 0}
+    - _EmissionAudioLinkPathingRColor: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionAudioLinkRange: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _GeneralScaleOffset: {r: 1, g: 1, b: 0, a: 0}
+    - _IndirectColor: {r: 0.735849, g: 0.735849, b: 0.735849, a: 1}
     - _LTCGI_Intensity: {r: 1, g: 1, b: 1, a: 0}
     - _LTCGI_Scale: {r: 1, g: 1, b: 1, a: 0}
     - _MatcapColor: {r: 1, g: 1, b: 1, a: 1}
     - _OutlineColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Overscan: {r: 0, g: 0, b: 0, a: 0}
+    - _SSSColor: {r: 2, g: 0, b: 0, a: 1}
+    - _ShadowColor1Tint: {r: 0, g: 0, b: 0, a: 1}
+    - _ShadowColor2Tint: {r: 0, g: 0, b: 0, a: 1}
     - _SpecularTint: {r: 1, g: 1, b: 1, a: 1}
+    - _StrobeSharpness: {r: 0.014, g: 0.122, b: 0, a: 0}
+    - _SubpixelMaskScale: {r: 1, g: 1, b: 0, a: 0}
+    - _SubpixelResolution: {r: 1280, g: 720, b: 0, a: 0}
+    - _ToonMathGradientBrightness: {r: 0, g: 0.5, b: 0, a: 0}
+    - _ToonMathGradientDiffuse: {r: 0, g: 1, b: 0, a: 0}
+    - _ToonMathGradientSpecular: {r: 0, g: 1, b: 0, a: 0}

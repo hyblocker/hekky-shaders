@@ -2,6 +2,7 @@
 #define HEKKY_COMMON_UNITY_UTILS
 
 #define PI 3.14159265358979323846
+#define ONE_ON_PI 0.3183098861837907
 
 #define EPSILON 1e-5
 #define czm_epsilon7 0.0000001f

@@ -1,10 +1,10 @@
-﻿Shader "Hekky/PBR Uber/Standard"
+﻿Shader "Hekky/PBR Uber/Standard (Outline)"
 {
     Properties
     {
         // ==================== CORE ====================
         
-        [HideInInspector]_Manifest("__;title('Hekky PBR Uber');docsURL('https://docs.hyblocker.dev/en/shaders/hekky-pbr/reference')", Float) = 0
+        [HideInInspector]_Manifest("__;title('Hekky PBR Uber (Outline)');docsURL('https://docs.hyblocker.dev/en/shaders/hekky-pbr/reference')", Float) = 0
         [HideInInspector]_Version("__;version(1.4);", Float) = 1
         
         _Header("__;doHeader;spacing;spacing;", Float) = 0
@@ -155,6 +155,16 @@
 
         _FoldoutOcclusionEnd("__; endFoldout", Float) = 0.0
         
+        // ==================== OUTLINE ====================
+
+        _FoldoutOutlineBegin("Outline; beginFoldout", Float) = 0.0
+            
+            [ToggleUI]_DoOutline("Enable Outline;pass(OUTLINE)", Int) = 1
+            _OutlineWidth("Outline Width", Float) = 0.1
+            _OutlineColor("Outline Color", Color) = (0,0,0)
+
+        _FoldoutOutlineEnd("__; endFoldout", Float) = 0.0
+        
         // ==================== AUDUIOLINK DEBUG ====================
         _FoldoutAudioLinkDebugBegin("AudioLink Debug; beginFoldout", Float) = 0.0
             
@@ -278,6 +288,38 @@
             
             #pragma vertex vertAdd
             #pragma fragment fragAdd
+            #include "PBRUberDefines.cginc"
+            
+            ENDCG
+        }
+
+        Pass
+        {
+            Name "OUTLINE"
+            Tags { "LightMode"="ForwardBase" }
+            Cull Front
+            ZWrite Off
+
+            CGPROGRAM
+            #pragma target 5.0
+
+            #pragma shader_feature_local _NORMALMAP
+            #pragma shader_feature_local _ _ALPHATEST_ON _ALPHABLEND_ON _ALPHAPREMULTIPLY_ON
+            #pragma shader_feature_local _METALLICGLOSSMAP
+            #pragma shader_feature_local _SPECGLOSSMAP
+            #pragma shader_feature_local _PARALLAXMAP
+            
+            #pragma multi_compile_fwdadd_fullshadows
+            #pragma multi_compile_fog
+            #pragma multi_compile_instancing
+            // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
+            // #pragma multi_compile _ LOD_FADE_CROSSFADE
+            
+            #pragma vertex vertOutline
+            #pragma fragment fragOutline
+
+            #define OUTLINE 1
+            
             #include "PBRUberDefines.cginc"
             
             ENDCG

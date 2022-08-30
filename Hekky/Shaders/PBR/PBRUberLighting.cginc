@@ -32,11 +32,10 @@ PixelParams getPixelParams(const ShadingData shading, const MaterialData materia
     pixel.roughness = pixel.perceptualRoughness * pixel.perceptualRoughness;
 
     pixel.aniso = material.aniso;
-
-    // TODO: Impl
-    pixel.thickness = 1.0;
-    pixel.subsurfaceColor = float3(0, 0, 0);
-    pixel.subsurfaceIntensity = 0;
+    
+    pixel.thickness = material.subsurface.thickness;
+    pixel.subsurfaceColor = material.subsurface.color;
+    pixel.subsurfaceIntensity = material.subsurface.intensity;
 
     const float reflectance = computeDielectricF0(material.reflectance);
     pixel.f0 = computeF0(material.baseColor, material.metallic, reflectance);

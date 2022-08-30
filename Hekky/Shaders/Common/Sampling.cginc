@@ -201,33 +201,4 @@ inline float4 SampleDynamicLightmapDirBicubic(float2 uv)
 
 #endif
 
-// =====================================================================================================
-//                                           SPHERICAL HARMONICS
-// =====================================================================================================
-
-// https://web.archive.org/web/20160313132301/http://www.geomerics.com/wp-content/uploads/2015/08/CEDEC_Geomerics_ReconstructingDiffuseLighting1.pdf
-inline float shEvaluateDiffuseL1Geomerics_local(const float L0, const float3 L1, const float3 n)
-{
-    // average energy
-    // clamp negative values
-    const float R0 = max(L0, 0.0);
-
-    // average light direction
-    const float3 R1 = 0.5f * L1;
-    const float magR1 = length(R1);
-    const float lightDirectionalRatio = magR1 / R0;
-
-    // solve for dynamic range constant a
-    const float a = (1.0f - lightDirectionalRatio) / (1.0f + lightDirectionalRatio);
-
-    // angle between normal and directional L1
-    float q = 0.5f + 0.5f * dot(normalize(R1), n);
-    q = saturate(q);
-
-    // power of q
-    const float p = 1.0f + 2.0f * lightDirectionalRatio;
-    
-    return R0 * (a + (1.0f - a) * (p + 1.0f) * pow(q, p));
-}
-
 #endif // HEKKY_COMMON_SAMPLING

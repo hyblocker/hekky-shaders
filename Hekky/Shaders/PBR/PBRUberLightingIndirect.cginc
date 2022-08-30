@@ -44,120 +44,6 @@ inline float3 specularDFG(const PixelParams pixel)
     return lerp(pixel.dfg.xxx, pixel.dfg.yyy, pixel.f0);
 }
 
-// ==============================================================================================================
-//                                                  LIGHT PROBES 
-// ==============================================================================================================
-
-inline float3 Irradiance_SphericalHarmonics(const float3 normal, const bool useL2, out Light outLight)
-{
-    float3 finalSH = 0;
-
-    const float3 L0 = float3(unity_SHAr.w, unity_SHAg.w, unity_SHAb.w)
-        + float3(unity_SHBr.z, unity_SHBg.z, unity_SHBb.z) / 3.0;
-    finalSH.r = shEvaluateDiffuseL1Geomerics_local(L0.r, unity_SHAr.xyz, normal);
-    finalSH.g = shEvaluateDiffuseL1Geomerics_local(L0.g, unity_SHAg.xyz, normal);
-    finalSH.b = shEvaluateDiffuseL1Geomerics_local(L0.b, unity_SHAb.xyz, normal);
-    // Quadratic polynomials
-    if (useL2) finalSH += SHEvalLinearL2 (float4(normal, 1));
-
-    // Light based on Light probes
-    outLight.l = normalize(unity_SHAr.xyz + unity_SHAg.xyz + unity_SHAb.xyz);
-    outLight.worldPosition = 0;
-    outLight.colorIntensity = 0;
-    outLight.NdotL = saturate(dot(normal, outLight.l));
-    outLight.distance = 100;
-    outLight.attenuation = 1.;
-    
-    return finalSH;
-}
-
-#if UNITY_LIGHT_PROBE_PROXY_VOLUME
-
-inline half3 Irradiance_SampleProbeVolume(half4 normal, float3 worldPos, out Light outLight)
-{
-    const float transformToLocal = unity_ProbeVolumeParams.y;
-    const float texelSizeX = unity_ProbeVolumeParams.z;
-
-    //The SH coefficients textures and probe occlusion are packed into 1 atlas.
-    //-------------------------
-    //| ShR | ShG | ShB | Occ |
-    //-------------------------
-
-    float3 position = (transformToLocal == 1.0f) ? mul(unity_ProbeVolumeWorldToObject, float4(worldPos, 1.0)).xyz : worldPos;
-    float3 texCoord = (position - unity_ProbeVolumeMin.xyz) * unity_ProbeVolumeSizeInv.xyz;
-    texCoord.x = texCoord.x * 0.25f;
-
-    // We need to compute proper X coordinate to sample.
-    // Clamp the coordinate otherwize we'll have leaking between RGB coefficients
-    float texCoordX = clamp(texCoord.x, 0.5f * texelSizeX, 0.25f - 0.5f * texelSizeX);
-
-    // sampler state comes from SHr (all SH textures share the same sampler)
-    texCoord.x = texCoordX;
-    half4 SHAr = UNITY_SAMPLE_TEX3D_SAMPLER(unity_ProbeVolumeSH, unity_ProbeVolumeSH, texCoord);
-
-    texCoord.x = texCoordX + 0.25f;
-    half4 SHAg = UNITY_SAMPLE_TEX3D_SAMPLER(unity_ProbeVolumeSH, unity_ProbeVolumeSH, texCoord);
-
-    texCoord.x = texCoordX + 0.5f;
-    half4 SHAb = UNITY_SAMPLE_TEX3D_SAMPLER(unity_ProbeVolumeSH, unity_ProbeVolumeSH, texCoord);
-    
-    // Linear + constant polynomial terms
-    half3 x1;
-
-    x1.r = shEvaluateDiffuseL1Geomerics_local(SHAr.w, SHAr.rgb, normal);
-    x1.g = shEvaluateDiffuseL1Geomerics_local(SHAg.w, SHAg.rgb, normal);
-    x1.b = shEvaluateDiffuseL1Geomerics_local(SHAb.w, SHAb.rgb, normal);
-    
-    // Light based on Light probes
-    outLight.l = normalize(SHAr.rgb + SHAg.rgb + SHAb.rgb);
-    outLight.worldPosition = 0;
-    outLight.colorIntensity = 0;
-    outLight.NdotL = saturate(dot(normal, outLight.l));
-    outLight.distance = 100;
-    outLight.attenuation = 1.;
-    
-    return x1;
-}
-
-#endif
-
-inline float3 Irradiance_SphericalHarmonicsUnity(float3 normal, float3 ambient, float3 position, out Light outLight)
-{
-    half3 ambient_contrib = 0.0;
-
-    #if UNITY_SAMPLE_FULL_SH_PER_PIXEL
-        #if UNITY_LIGHT_PROBE_PROXY_VOLUME
-            if (unity_ProbeVolumeParams.x == 1.0)
-                ambient_contrib = Irradiance_SampleProbeVolume(half4(normal, 1.0), position, outLight);
-            else
-                ambient_contrib = Irradiance_SphericalHarmonics(normal, true, outLight);
-        #else
-            ambient_contrib = Irradiance_SphericalHarmonics(normal, true, outLight);
-        #endif
-    
-        ambient += max(half3(0, 0, 0), ambient_contrib);
-    #else
-        #if UNITY_LIGHT_PROBE_PROXY_VOLUME
-            if (unity_ProbeVolumeParams.x == 1.0)
-                ambient_contrib = Irradiance_SampleProbeVolume(half4(normal, 1.0), position, outLight);
-            else
-                ambient_contrib = Irradiance_SphericalHarmonics(normal, false, outLight);
-        #else
-            ambient_contrib = Irradiance_SphericalHarmonics(normal, false, outLight);
-        #endif
-
-        ambient = max(half3(0, 0, 0), ambient+ambient_contrib);     // include L2 contribution in vertex shader before clamp.
-    #endif // UNITY_SAMPLE_FULL_SH_PER_PIXEL
-    
-    #ifdef UNITY_COLORSPACE_GAMMA
-        ambient = LinearToGammaSpace(ambient);
-    #endif
-    
-    outLight.colorIntensity = float4(ambient, 0);
-    
-    return ambient;
-}
-
 // =======================================================================================
 //                                LIGHT SPECULAR SAMPLING
 // =======================================================================================
@@ -593,12 +479,12 @@ float3 evaluateIBL(const ShadingData shading, const MaterialData material, const
     UNITY_BRANCH
     if (LIGHTING_MODE_TOON) {
         // hack to preserve high luminosity
-        float originalLumExtra = max(0.0, luminosity(diffuseIrridiance) - (_ToonMathGradientBrightnessRemapped.y - _ToonMathGradientBrightnessRemapped.x));
+        float originalLumExtra = max(0.0, luminosity(diffuseIrridiance) - (_ToonMathGradientBrightness.y - _ToonMathGradientBrightness.x));
         float steppedIrridiance = smoothstep(0, 0.01, diffuseIrridiance);
         diffuseIrridiance = lerp (
-            max(_ToonMathGradientBrightnessRemapped.x, 0.05) * steppedIrridiance,
-            max(_ToonMathGradientBrightnessRemapped.y, 1.0) * steppedIrridiance,
-            toonify(diffuseIrridiance) )
+            max(_ToonMathGradientBrightness.x, 0.05) * steppedIrridiance,
+            max(_ToonMathGradientBrightness.y, 1.0) * steppedIrridiance,
+            toonify(diffuseIrridiance, _ToonMathGradientDiffuse) )
         + originalLumExtra;
     }
     #if LTCGI_ENABLED

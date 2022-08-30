@@ -49,7 +49,7 @@ float3 evaluateDirectionalLight(const ShadingData shading, const MaterialData ma
     if (any(light.NdotL))
     {
         #ifdef HEKKY_UBER_TOON
-            visibility *= toonify(shading.attenuation, -1, 1);
+            visibility *= toonify(shading.attenuation, _ToonMathGradientDiffuse, -1, 1);
         #else
             visibility *= shading.attenuation;
         #endif

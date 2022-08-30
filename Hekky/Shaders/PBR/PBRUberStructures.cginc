@@ -27,21 +27,6 @@ struct PixelParams
     float aniso;
 };
 
-// ====================================================================
-//                            LIGHTING DATA
-// ====================================================================
-
-// A singular Unity Light
-struct Light {
-    // rgb, pre-exposed intensity
-    float4 colorIntensity;
-    float3 l; // L
-    float NdotL;
-    float attenuation;
-    float3 worldPosition;
-    float distance; // Pre-computed distance between light and pixel
-};
-
 // Data required for light composition
 struct ShadingData
 {
@@ -85,6 +70,7 @@ struct SubsurfaceData
 {
     float3 color;
     float thickness;
+    float intensity;
 };
 
 // Textures sampled and interpolated for the BRDF composition step

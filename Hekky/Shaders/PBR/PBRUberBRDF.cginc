@@ -9,6 +9,13 @@ inline float sqr(const float val)
     return val * val;
 }
 
+inline float3 F_Schlick(in float u)
+{
+    float m = clamp(1 - u, 0, 1);
+    float m2 = m * m;
+    return m2 * m2 * m; // pow(m,5)
+}
+
 inline float3 F_Schlick(in float3 f0, in float f90, in float u)
 {
     // Schlick 1994, "An Inexpensive BRDF Model for Physically-Based Rendering"
@@ -76,6 +83,15 @@ inline float Fr_DisneyDiffuse(const float NdotV, const float NdotL, const float 
     return lightScatter * viewScatter * energyFactor;
 }
 
+inline float subsurfaceLobe(const float NdotV, const float NdotL, const float LdotH, const float linearRoughness)
+{
+    float FL = F_Schlick(NdotL);
+    float FV = F_Schlick(NdotV);
+    float Fss90 = LdotH * LdotH * linearRoughness;
+    float Fss = lerp(1.f, Fss90, FL) * lerp(1.f, Fss90, FV);
+    return 1.25f * (Fss * (1.f / max(NdotL + NdotV, 0.01f) - .5f) + .5f);
+}
+
 inline float diffuseLobe(const PixelParams pixel, float NdotV, float NdotL, float NdotH, float LdotH)
 {
     return Fr_DisneyDiffuse(NdotV, NdotL, LdotH, pixel.roughness);
@@ -137,13 +153,19 @@ inline float3 surfaceShading(const ShadingData shading, const PixelParams pixel,
     UNITY_BRANCH
     if (LIGHTING_MODE_TOON) {
         // hack to preserve high luminosity
-        float originalLumExtra = max(0.0, luminosity(Fr) - (_ToonMathGradientBrightnessRemapped.y - _ToonMathGradientBrightnessRemapped.x));
-		float toonFr = toonify(Fr);
-        Fr = lerp ( _ToonMathGradientBrightnessRemapped.x, _ToonMathGradientBrightnessRemapped.y, toonFr ) + originalLumExtra * toonFr;
+        float originalLumExtra = max(0.0, luminosity(Fr) - (_ToonMathGradientBrightness.y - _ToonMathGradientBrightness.x));
+		float toonFr = toonify(Fr, _ToonMathGradientSpecular);
+        Fr = lerp (_ToonMathGradientBrightness.x, _ToonMathGradientBrightness.y, toonFr ) + originalLumExtra * toonFr;
     }
 
     // Specular tint
     Fr = lerp(Fr, luminosity(Fr) * _SpecularTint.rgb, _Specular);
+
+    #if SUBSURFACE_SCATTERING
+    const float3 ss = subsurfaceLobe(NdotV, NdotL, LdotH, pixel.roughness) * pixel.subsurfaceColor;
+    const float subsurfFactor = pixel.subsurfaceIntensity * (1.f - pixel.thickness);
+    // Fr = lerp(Fr, ss, pixel.subsurfaceIntensity * (1.f - pixel.thickness));
+    #endif
 
     float3 color = Fd + Fr * pixel.energyConservation;
 
@@ -151,14 +173,20 @@ inline float3 surfaceShading(const ShadingData shading, const PixelParams pixel,
     
     UNITY_BRANCH
     if (LIGHTING_MODE_TOON) {
-        shadowTerm = lerp ( _ToonMathGradientBrightnessRemapped.x, _ToonMathGradientBrightnessRemapped.y, toonify(shadowTerm) );
+        shadowTerm = lerp (_ToonMathGradientBrightness.x, _ToonMathGradientBrightness.y, toonify(shadowTerm, _ToonMathGradientDiffuse) );
     } else if (LIGHTING_MODE_UNLIT) {
         shadowTerm = 1;
     } else {
         shadowTerm = saturate(shadowTerm);
     }
 
-    return (color * light.colorIntensity.rgb) * shadowTerm;
+    float3 finalColor = (color * light.colorIntensity.rgb) * shadowTerm;
+    
+    #if SUBSURFACE_SCATTERING
+    finalColor += pixel.energyConservation * subsurfFactor * ss * ONE_ON_PI * occlusion;
+    #endif
+
+    return finalColor;
 }
 
 #endif // HEKKY_PBR_UBER_BSDF

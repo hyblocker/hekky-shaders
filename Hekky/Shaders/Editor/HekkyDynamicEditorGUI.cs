@@ -260,26 +260,6 @@ namespace Hekky {
             return false;
         }
         
-        
-
-        static string GetIntBinaryString(int n)
-        {
-            char[] b = new char[32];
-            int pos = 31;
-            int i = 0;
-
-            while (i < 32)
-            {
-                if ((n & (1 << i)) != 0)
-                    b[pos] = '1';
-                else
-                    b[pos] = '0';
-                pos--;
-                i++;
-            }
-            return new string(b);
-        }
-        
         private void DrawTextureWithOtherProp(GUIContent content, MaterialProperty textureProp, HekkyMaterialProperty inlineProp) {
             
             EditorGUILayout.BeginHorizontal();
@@ -329,6 +309,10 @@ namespace Hekky {
             byte[] sliderComponent = new byte[4];
             string[] sliderNames = {"", "", "", ""};
             Vector2[] sliderRange = new Vector2[4];
+
+            // Min max
+            Vector2 minMaxRange = Vector2.zero;
+            bool doMinMax = false;
 
             for ( int i = 0; i < prop.properties.Length; i++ ) {
                 switch ( prop.properties[i].propertyType ) {
@@ -403,6 +387,19 @@ namespace Hekky {
 
                         sliderCount++;
                         break;
+
+                    case HekkyShaderProperty.MinMax:
+                        doMinMax = true;
+
+                        float minVal = 0;
+                        float maxVal = 1;
+
+                        float.TryParse(( string ) prop.properties[i].values[0], out minVal);
+                        float.TryParse(( string ) prop.properties[i].values[1], out maxVal);
+
+                        minMaxRange = new Vector2(minVal, maxVal);
+
+                        break;
                 }
             }
 
@@ -422,35 +419,25 @@ namespace Hekky {
                         propertyMap[prop.unityInternalProperty.name].sameLine.unityInternalProperty;
 
                     if ( sameLineUnityInternalProp.type == MaterialProperty.PropType.Texture ) {
-                        
-                        
-                        // materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
-                        //    sameLineUnityInternalProp, prop.unityInternalProperty);
-                        
+
                         DrawTextureWithOtherProp(EditorGUIUtility.TrTextContent(prop.displayName),
                             sameLineUnityInternalProp, propertyMap[prop.unityInternalProperty.name].sameLine);
-                        
-                        
+
                         if ( doLinearProp ) {
                             LinearWarning(prop.unityInternalProperty);
                         }
                     } else if ( prop.unityInternalProperty.type == MaterialProperty.PropType.Texture ) {
-                        
-                        
-                        // materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
-                        //    prop.unityInternalProperty, sameLineUnityInternalProp);
-                        
+
                         DrawTextureWithOtherProp(EditorGUIUtility.TrTextContent(prop.displayName),
                             prop.unityInternalProperty, propertyMap[prop.unityInternalProperty.name].sameLine);
-
 
                         if ( doLinearProp ) {
                             LinearWarning(prop.unityInternalProperty);
                         }
                     } else
-                    
+
                         materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
-                    
+
                 } else {
                     Rect mainRect;
                     Rect rect;
@@ -461,7 +448,7 @@ namespace Hekky {
                             if ( doLinearProp )
                                 LinearWarning(prop.unityInternalProperty);
                             break;
-                        
+
                         case MaterialProperty.PropType.Vector:
                             if ( sliderCount > 0 ) {
                                 Vector4 vecVal = prop.unityInternalProperty.vectorValue;
@@ -469,17 +456,17 @@ namespace Hekky {
 
                                 for ( int i = 0; i < sliderCount; i++ ) {
                                     EditorGUILayout.BeginHorizontal();
-                                    
+
                                     vecVal[i] = DoSlider(
                                         sliderNames[i].Length == 0
                                             ? $"{prop.displayName} {IndexToVecComponentString(sliderComponent[i])}"
                                             : sliderNames[i],
                                         vecVal[i], sliderRange[i].x, sliderRange[i].y);
-                                    
+
                                     mainRect = GUILayoutUtility.GetLastRect();
                                     rect = EditorGUILayout.GetControlRect(GUILayout.Width(14), GUILayout.Height(11), GUILayout.ExpandHeight(true));
                                     rect.y = mainRect.yMax - rect.height;
-                                    if (GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton)) {
+                                    if ( GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton) ) {
                                         materialEditor.RegisterPropertyChangeUndo("Reset value");
                                         vecVal[i] = defaultVector[i];
                                     }
@@ -487,13 +474,33 @@ namespace Hekky {
                                 }
 
                                 prop.unityInternalProperty.vectorValue = vecVal;
+                            } else if (doMinMax) {
+                                EditorGUILayout.BeginHorizontal();
+
+                                float minVal = prop.unityInternalProperty.vectorValue.x;
+                                float maxVal = prop.unityInternalProperty.vectorValue.y;
+
+                                EditorGUILayout.MinMaxSlider(prop.displayName, ref minVal, ref maxVal, minMaxRange.x, minMaxRange.y);
+
+                                Vector4 newMinMaxValue = new Vector4(minVal, maxVal, 0, 0);
+                                prop.unityInternalProperty.vectorValue = newMinMaxValue;
+
+                                mainRect = GUILayoutUtility.GetLastRect();
+                                rect = EditorGUILayout.GetControlRect(GUILayout.Width(14), GUILayout.Height(11), GUILayout.ExpandHeight(true));
+                                rect.y = mainRect.yMax - rect.height;
+                                if ( GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton) ) {
+                                    materialEditor.RegisterPropertyChangeUndo("Reset value");
+                                    Vector4 defaultVector = material.shader.GetPropertyDefaultVectorValue(prop.index);
+                                    prop.unityInternalProperty.vectorValue = defaultVector;
+                                }
+                                EditorGUILayout.EndHorizontal();
                             } else {
                                 EditorGUILayout.BeginHorizontal();
                                 materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
                                 mainRect = GUILayoutUtility.GetLastRect();
                                 rect = EditorGUILayout.GetControlRect(GUILayout.Width(14), GUILayout.Height(11), GUILayout.ExpandHeight(true));
                                 rect.y = mainRect.yMax - rect.height;
-                                if (GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton)) {
+                                if ( GUI.Button(rect, HGUI.UndoArrowContent, HGUI.UndoButton) ) {
                                     materialEditor.RegisterPropertyChangeUndo("Reset value");
                                     Vector4 defaultVector = material.shader.GetPropertyDefaultVectorValue(prop.index);
                                     prop.unityInternalProperty.vectorValue = defaultVector;
@@ -865,6 +872,9 @@ namespace Hekky {
                             case "slider":
                                 token.propertyType = HekkyShaderProperty.Slider;
                                 break;
+                            case "minmax":
+                                token.propertyType = HekkyShaderProperty.MinMax;
+                                break;
                             case "linear":
                                 token.propertyType = HekkyShaderProperty.LinearWarning;
                                 textureIsLinear = true;
@@ -1129,6 +1139,7 @@ namespace Hekky {
         Spacing, // spacing
 
         Slider, // slider
+        MinMax, // minMax
         LinearWarning, // linear
 
         ShaderPass, // pass
