@@ -1,4 +1,5 @@
-﻿using System;
+﻿using log4net.Filter;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -144,6 +145,11 @@ namespace Hekky {
             // 
             // UpdateKeywords(material);
             // SetBlendMode(material, (HGUI.BlendMode)material.GetFloat("_Mode"), true);
+
+            // @HACK: Until I rewrite this later to work agnostically and not be hardcoded
+            if ( material.HasProperty("_SSREnabled") ) {
+                material.GetFloat("_SSREnabled");
+            }
         }
 
         #region Render GUI
@@ -304,6 +310,12 @@ namespace Hekky {
             bool doUVScaleOffsetBlock = false;
             bool doLinearProp = false;
 
+            float lastValue_Float = 0.0f;
+            Vector4 lastValue_Vec4 = Vector4.zero;
+            Color lastValue_Color = Color.black;
+            Texture lastValue_Texture = null;
+            bool valueChanged = false;
+
             // Range slider
             byte sliderCount = 0;
             byte[] sliderComponent = new byte[4];
@@ -313,6 +325,9 @@ namespace Hekky {
             // Min max
             Vector2 minMaxRange = Vector2.zero;
             bool doMinMax = false;
+
+            string toggleTypeSignature = string.Empty;
+            string toggleMethodSignature = string.Empty;
 
             for ( int i = 0; i < prop.properties.Length; i++ ) {
                 switch ( prop.properties[i].propertyType ) {
@@ -400,6 +415,10 @@ namespace Hekky {
                         minMaxRange = new Vector2(minVal, maxVal);
 
                         break;
+                    case HekkyShaderProperty.OnToggle:
+                        toggleTypeSignature = ( string ) prop.properties[i].values[0];
+                        toggleMethodSignature = ( string ) prop.properties[i].values[1];
+                        break;
                 }
             }
 
@@ -420,36 +439,62 @@ namespace Hekky {
 
                     if ( sameLineUnityInternalProp.type == MaterialProperty.PropType.Texture ) {
 
+                        lastValue_Float = propertyMap[prop.unityInternalProperty.name].sameLine.unityInternalProperty.floatValue;
+                        lastValue_Texture = sameLineUnityInternalProp.textureValue;
+
                         DrawTextureWithOtherProp(EditorGUIUtility.TrTextContent(prop.displayName),
                             sameLineUnityInternalProp, propertyMap[prop.unityInternalProperty.name].sameLine);
+
+                        valueChanged =
+                            ( lastValue_Texture != sameLineUnityInternalProp.textureValue ) ||
+                            ( lastValue_Float != propertyMap[prop.unityInternalProperty.name].sameLine.unityInternalProperty.floatValue );
 
                         if ( doLinearProp ) {
                             LinearWarning(prop.unityInternalProperty);
                         }
                     } else if ( prop.unityInternalProperty.type == MaterialProperty.PropType.Texture ) {
 
+                        lastValue_Float = propertyMap[prop.unityInternalProperty.name].sameLine.unityInternalProperty.floatValue;
+                        lastValue_Texture = prop.unityInternalProperty.textureValue;
+
                         DrawTextureWithOtherProp(EditorGUIUtility.TrTextContent(prop.displayName),
                             prop.unityInternalProperty, propertyMap[prop.unityInternalProperty.name].sameLine);
+
+                        valueChanged =
+                            ( lastValue_Texture != prop.unityInternalProperty.textureValue ) ||
+                            ( lastValue_Float != propertyMap[prop.unityInternalProperty.name].sameLine.unityInternalProperty.floatValue );
 
                         if ( doLinearProp ) {
                             LinearWarning(prop.unityInternalProperty);
                         }
-                    } else
+                    } else {
+                        lastValue_Float = prop.unityInternalProperty.floatValue;
 
                         materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
+
+                        valueChanged = lastValue_Float != prop.unityInternalProperty.floatValue;
+                    }
 
                 } else {
                     Rect mainRect;
                     Rect rect;
                     switch ( prop.unityInternalProperty.type ) {
                         case MaterialProperty.PropType.Texture:
+                            lastValue_Texture = prop.unityInternalProperty.textureValue;
+
                             materialEditor.TexturePropertySingleLine(EditorGUIUtility.TrTextContent(prop.displayName),
                                 prop.unityInternalProperty);
+
+                            valueChanged = lastValue_Texture != prop.unityInternalProperty.textureValue;
+
                             if ( doLinearProp )
                                 LinearWarning(prop.unityInternalProperty);
                             break;
 
                         case MaterialProperty.PropType.Vector:
+
+                            lastValue_Vec4 = prop.unityInternalProperty.vectorValue;
+
                             if ( sliderCount > 0 ) {
                                 Vector4 vecVal = prop.unityInternalProperty.vectorValue;
                                 Vector4 defaultVector = material.shader.GetPropertyDefaultVectorValue(prop.index);
@@ -508,9 +553,13 @@ namespace Hekky {
                                 EditorGUILayout.EndHorizontal();
                             }
 
+                            valueChanged = lastValue_Vec4 != prop.unityInternalProperty.vectorValue;
+
                             break;
                         case MaterialProperty.PropType.Color:
-                            
+
+                            lastValue_Color = prop.unityInternalProperty.colorValue;
+
                             EditorGUILayout.BeginHorizontal();
                             materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
                             mainRect = GUILayoutUtility.GetLastRect();
@@ -521,12 +570,16 @@ namespace Hekky {
                                 Vector4 defaultColor = material.shader.GetPropertyDefaultVectorValue(prop.index);
                                 prop.unityInternalProperty.colorValue = new Color(defaultColor.x, defaultColor.y, defaultColor.z, defaultColor.w);
                             }
+
+                            valueChanged = lastValue_Color != prop.unityInternalProperty.colorValue;
                             EditorGUILayout.EndHorizontal();
                             break;
                         
                         case MaterialProperty.PropType.Range:
                         case MaterialProperty.PropType.Float:
-                            
+
+                            lastValue_Float = prop.unityInternalProperty.floatValue;
+
                             EditorGUILayout.BeginHorizontal();
                             materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
                             mainRect = GUILayoutUtility.GetLastRect();
@@ -538,12 +591,18 @@ namespace Hekky {
                                 prop.unityInternalProperty.floatValue = defaultValue;
                             }
                             EditorGUILayout.EndHorizontal();
-                            
+
+                            valueChanged = lastValue_Float != prop.unityInternalProperty.floatValue;
+
                             break;
 
                         // TODO: More props
                         default:
+                            lastValue_Float = prop.unityInternalProperty.floatValue;
+
                             materialEditor.ShaderProperty(prop.unityInternalProperty, prop.displayName);
+
+                            valueChanged = lastValue_Float != prop.unityInternalProperty.floatValue;
                             break;
                     }
 
@@ -555,6 +614,21 @@ namespace Hekky {
 
                 if ( doUVScaleOffsetBlock ) {
                     materialEditor.TextureScaleOffsetProperty(prop.unityInternalProperty);
+                }
+
+                // @TODO: Only if change
+                if ( valueChanged && toggleTypeSignature.Length > 0 && toggleMethodSignature.Length > 0 ) {
+                    var type = Assembly.GetExecutingAssembly().GetType(toggleTypeSignature);
+                    if ( type != null ) {
+                        var method = type.GetMethod(toggleMethodSignature);
+                        if ( method != null ) {
+                            method.Invoke(null, new object[] { ( prop.unityInternalProperty.floatValue == 1.0f ), prop, materialEditor, material });
+                        } else {
+                            Debug.LogWarning($"Failed to find method {toggleMethodSignature}!");
+                        }
+                    } else {
+                        Debug.LogWarning($"Failed to find type {toggleTypeSignature}!");
+                    }
                 }
 
                 if ( disabled ) {
@@ -883,6 +957,9 @@ namespace Hekky {
                             case "pass":
                                 token.propertyType = HekkyShaderProperty.ShaderPass;
                                 break;
+                            case "onToggle":
+                                token.propertyType = HekkyShaderProperty.OnToggle;
+                                break;
 
                             case "requireBakery":
                                 token.propertyType = HekkyShaderProperty.RequireBakery;
@@ -1071,7 +1148,7 @@ namespace Hekky {
     /// <summary>
     /// A Shader property, similar to Unity's base MaterialProperty
     /// </summary>
-    class HekkyMaterialProperty {
+    public class HekkyMaterialProperty {
         /// <summary>
         /// The individual properties of this property
         /// </summary>
@@ -1093,7 +1170,7 @@ namespace Hekky {
         public int index;
     }
 
-    struct HekkyShaderToken {
+    public struct HekkyShaderToken {
         /// <summary>
         /// The raw, unparsed shader property
         /// </summary>
@@ -1110,7 +1187,7 @@ namespace Hekky {
         public HekkyShaderProperty propertyType;
     }
 
-    enum HekkyShaderProperty {
+    public enum HekkyShaderProperty {
         Unknown = -1, // what the fuck is this type
 
         Version = 0, // version(0.0.1a)
@@ -1143,6 +1220,7 @@ namespace Hekky {
         LinearWarning, // linear
 
         ShaderPass, // pass
+        OnToggle, // onToggle(fullMethodSignature)
 
         RequireBakery, // requireBakery
         RequireAudioLink, // requireAudioLink

@@ -367,13 +367,29 @@ inline half3 Unity_GlossyEnvironment_local(UNITY_ARGS_TEXCUBE(tex), half4 hdr, U
     return DecodeHDR(rgbm, hdr);
 }
 
-inline half3 UnityGI_prefilteredRadiance(const UnityGIInput giData, const float perceptualRoughness, const float3 reflectionDir, const float3 matcapColor)
+inline half3 UnityGI_prefilteredRadiance(const UnityGIInput giData, const float perceptualRoughness, const float3 reflectionDir, const ShadingData shading)
 {
     half3 specular;
 
     Unity_GlossyEnvironmentData glossIn = (Unity_GlossyEnvironmentData)0;
     glossIn.roughness = perceptualRoughness;
     glossIn.reflUVW = reflectionDir;
+
+    float4 SSRColor = float4(0,0,0,0);
+    #if SSR
+        SSRData ssrData         = (SSRData)0;
+        ssrData.worldPos        = giData.worldPos;
+        ssrData.viewDir         = giData.worldViewDir;
+        ssrData.reflectDir      = reflectionDir;
+        ssrData.surfaceNormal   = shading.normal;
+        ssrData.roughness       = perceptualRoughness;
+        ssrData.screenParams    = _GrabTexture_TexelSize.zw;
+        ssrData.hitRadius       = _SSRAccuracy;
+        ssrData.maxSteps        = _SSRMaxSteps;
+        ssrData.blur            = _SSRBlur;
+        ssrData.edgeFade        = _SSREdgeFade;
+        SSRColor = computeSSRColor(ssrData);
+    #endif
 
     #if (defined(UNITY_SPECCUBE_BOX_PROJECTION) && defined(_REFLECTIONSFORCEDMODE_DEFAULT)) || defined(_REFLECTIONSFORCEDMODE_BOX_PROJECTION)
         // we will tweak reflUVW in glossIn directly (as we pass it to Unity_GlossyEnvironment twice for probe0 and probe1), so keep original to pass into BoxProjectedCubemapDirection
@@ -404,7 +420,10 @@ inline half3 UnityGI_prefilteredRadiance(const UnityGIInput giData, const float 
         specular = env0;
     #endif
 
-    return lerp(specular, matcapColor, _MatcapReflectionBlend * _DoMatcap);
+    // "alpha-blend" the SSR colour and the reflection probe colour together, so that areas with no information for SSR still have
+    // convincing reflections
+    specular = lerp(specular, SSRColor.rgb, min(1, SSRColor.a * 4.f));
+    return lerp(specular, shading.matcapColor, _MatcapReflectionBlend * _DoMatcap);
 }
 
 inline UnityGIInput InitialiseUnityGIInput(const ShadingData shading, const PixelParams pixel)
@@ -446,7 +465,7 @@ float3 evaluateIBL(const ShadingData shading, const MaterialData material, const
     float3 Fr;
     float3 specularEnergyConpensation = specularDFG(pixel);
     float3 r = getReflectedVector(shading, pixel);
-    Fr = specularEnergyConpensation * UnityGI_prefilteredRadiance(unityData, pixel.perceptualRoughness, r, shading.matcapColor);
+    Fr = specularEnergyConpensation * UnityGI_prefilteredRadiance(unityData, pixel.perceptualRoughness, r, shading);
 
     #if LTCGI_ENABLED
 

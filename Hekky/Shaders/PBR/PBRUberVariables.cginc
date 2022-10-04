@@ -95,6 +95,19 @@ float _SSSIntensity;
 
 #endif
 
+#if SSR
+
+HEKKY_DECLARE_TEX2D_SCREENSPACE(_GrabTexture);
+float4 _GrabTexture_TexelSize;
+Texture2D _BlueNoise;
+float4 _BlueNoise_TexelSize;
+float _SSRBlur;
+float _SSRAccuracy;
+float _SSREdgeFade;
+int _SSRMaxSteps;
+
+#endif
+
 #if BAKERY_ENABLED
 // Declare bakery textures
 HEKKY_DECLARE_TEX2D(_RNM0);

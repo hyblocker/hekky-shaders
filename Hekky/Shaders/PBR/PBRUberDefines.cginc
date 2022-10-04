@@ -26,6 +26,10 @@
 #include "PBRUberAO.cginc"
 #include "PBRUberMatcap.cginc"
 #include "PBRUberBRDF.cginc"
+// SSR only
+#if SSR
+    #include "PBRUberSSR.cginc"
+#endif // SSR
 #include "PBRUberLightingLTCGI.cginc"
 #include "PBRUberLighting.cginc"
 #include "PBRUberPassStructures.cginc"

@@ -68,6 +68,8 @@
 
 #define SUBSURFACE_SCATTERING (defined(_SUBSURFACE_SCATTERING))
 
+#define SSR (defined(_SSR_ENABLED))
+
 /*
 
 // Unity Standard Shader Keywords

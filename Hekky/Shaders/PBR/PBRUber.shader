@@ -5,7 +5,7 @@
         // ==================== CORE ====================
         
         [HideInInspector]_Manifest("__;title('Hekky PBR Uber');docsURL('https://docs.hyblocker.dev/en/shaders/hekky-pbr/reference')", Float) = 0
-        [HideInInspector]_Version("__;version(1.4);", Float) = 1
+        [HideInInspector]_Version("__;version(1.5);", Float) = 1
         
         _Header("__;doHeader;spacing;spacing;", Float) = 0
         _MiscView("__;doTextureFixCollection;", Float) = 0
@@ -90,6 +90,11 @@
             _FoldoutReflectionsBegin("Reflections; beginFoldout", Float) = 0.0
             
                 [KeywordEnum(Default, Spherical Projection, Box Projection)]_ReflectionsForcedMode("Force reflections mode", Float) = 0
+                [Toggle(_SSR_ENABLED)]_SSREnabled("SSR;onToggle(Hekky.HekkySSR,OnToggleSSR)", Float) = 0
+                _SSRBlur("Blur;hideIfNot(_SSREnabled)", Range(0,1)) = 1
+                _SSREdgeFade("Edge Fade;hideIfNot(_SSREnabled)", Range(0,1)) = 0.1
+                _SSRAccuracy("Accuracy;hideIfNot(_SSREnabled)", Range(0,0.1)) = 0.02
+                _SSRMaxSteps("Maximum steps;hideIfNot(_SSREnabled)", Range(0, 500)) = 100
 
             _FoldoutReflectionsEnd("__; endFoldout", Float) = 0.0
         
@@ -180,6 +185,8 @@
             
             [NonModifiableTextureData][NoScaleOffset][HideInInspector] _DFG("DFG", 2D) = "white" {}
 
+            [NonModifiableTextureData][NoScaleOffset][HideInInspector] _BlueNoise("Blue Noise", 2D) = "black" {}
+
         _FoldoutExternalModulesEnd("__; endFoldout", Float) = 0.0
         
         // ==================== LTCGI SETTINGS ====================
@@ -213,6 +220,13 @@
         LOD 300
         Cull [_CullMode]
 
+
+        GrabPass
+        {
+            Tags { "LightMode" = "Always" }
+            "_GrabTexture"
+        }
+
         Pass
         {
             Name "FORWARD"
@@ -235,6 +249,7 @@
             #pragma shader_feature_local _LTCGI
             #pragma shader_feature_local _AUDIOLINK
             #pragma shader_feature_local _SUBSURFACE_SCATTERING
+            #pragma shader_feature_local _SSR_ENABLED
             #pragma shader_feature_local _REFLECTIONSFORCEDMODE_DEFAULT _REFLECTIONSFORCEDMODE_SPHERICAL_PROJECTION _REFLECTIONSFORCEDMODE_BOX_PROJECTION
             
             #pragma multi_compile_fwdbase
