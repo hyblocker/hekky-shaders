@@ -65,6 +65,10 @@ Material:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
+    - _ParallaxMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
     - _RNM0:
         m_Texture: {fileID: 0}
         m_Scale: {x: 1, y: 1}
@@ -114,8 +118,10 @@ Material:
     - _BumpScale: 1
     - _CullMode: 2
     - _DetailLighting: 0
+    - _DisablePomClipping: 0
     - _DoMatcap: 0
     - _DoOutline: 1
+    - _DoPOM: 0
     - _DoSSS: 0
     - _DoSubsurf: 0
     - _DstBlend: 0
@@ -150,17 +156,17 @@ Material:
     - _FoldoutLTCGIConfigEnd: 0
     - _FoldoutLightingBegin: 1
     - _FoldoutLightingEnd: 0
-    - _FoldoutMainBegin: 0
+    - _FoldoutMainBegin: 1
     - _FoldoutMainEnd: 0
     - _FoldoutMatcapBegin: 0
     - _FoldoutMatcapEnd: 0
     - _FoldoutNormalReprojectionBegin: 0
     - _FoldoutNormalReprojectionEnd: 0
-    - _FoldoutOcclusionBegin: 0
+    - _FoldoutOcclusionBegin: 1
     - _FoldoutOcclusionEnd: 0
     - _FoldoutOutlineBegin: 0
     - _FoldoutOutlineEnd: 0
-    - _FoldoutReflectionsBegin: 1
+    - _FoldoutReflectionsBegin: 0
     - _FoldoutReflectionsEnd: 0
     - _FoldoutShadowBegin: 0
     - _FoldoutShadowEnd: 0
@@ -203,6 +209,7 @@ Material:
     - _NormalReprojBlend: 1
     - _OcclusionStrength: 1
     - _OutlineWidth: 15.67
+    - _Parallax: 0.5
     - _ReflectionsForcedMode: 0
     - _SSRAccuracy: 0.02
     - _SSRBlur: 1

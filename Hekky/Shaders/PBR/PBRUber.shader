@@ -5,7 +5,7 @@
         // ==================== CORE ====================
         
         [HideInInspector]_Manifest("__;title('Hekky PBR Uber');docsURL('https://docs.hyblocker.dev/en/shaders/hekky-pbr/reference')", Float) = 0
-        [HideInInspector]_Version("__;version(1.5);", Float) = 1
+        [HideInInspector]_Version("__;version(1.6);", Float) = 1
         
         _Header("__;doHeader;spacing;spacing;", Float) = 0
         _MiscView("__;doTextureFixCollection;", Float) = 0
@@ -27,6 +27,11 @@
             _Glossiness ("Roughness; hide; showAlong(_SpecGlossMap)", Range(0.0, 1.0)) = 1
             _SpecGlossMap("Roughness Map; linear", 2D) = "white" {}
             [ToggleUI(_InvertGlossiness)] _InvertGlossiness("Invert Roughness", Int) = 1
+                    
+            [Toggle(_PARALLAXMAP)]_DoPOM("Enable POM", Int) = 0
+            _Parallax("Height; hide; showAlong(_ParallaxMap); hideIfNot(_DoPOM)", Range(0.0, 1.0)) = 0.5
+            _ParallaxMap("Height Map; hideIfNot(_DoPOM); linear", 2D) = "white" {}
+            [Toggle(_POM_CLIPPING)]_DisablePomClipping("Disable beyond 0-1 UVs; hideIfNot(_DoPOM)", Int) = 0
 
             _BumpScale("Scale; hide; showAlong(_BumpMap)", Range(0.0, 2.0)) = 1.0
             _BumpMap ("Normal Map", 2D) = "bump" {}
@@ -249,6 +254,7 @@
             #pragma shader_feature_local _LTCGI
             #pragma shader_feature_local _AUDIOLINK
             #pragma shader_feature_local _SUBSURFACE_SCATTERING
+            #pragma shader_feature_local _POM_CLIPPING
             #pragma shader_feature_local _SSR_ENABLED
             #pragma shader_feature_local _REFLECTIONSFORCEDMODE_DEFAULT _REFLECTIONSFORCEDMODE_SPHERICAL_PROJECTION _REFLECTIONSFORCEDMODE_BOX_PROJECTION
             
@@ -260,7 +266,7 @@
             
             #pragma vertex vertBase
             #pragma fragment fragBase
-            #include "PBRUberDefines.cginc"
+            #include "PBRUberIncludes.cginc"
             
             ENDCG
         }
@@ -283,6 +289,7 @@
             #pragma shader_feature_local _METALLICGLOSSMAP
             #pragma shader_feature_local _SPECGLOSSMAP
             #pragma shader_feature_local _PARALLAXMAP
+            #pragma shader_feature_local _POM_CLIPPING
             
             #pragma multi_compile_fwdadd_fullshadows
             #pragma multi_compile_fog
@@ -293,7 +300,7 @@
             
             #pragma vertex vertAdd
             #pragma fragment fragAdd
-            #include "PBRUberDefines.cginc"
+            #include "PBRUberIncludes.cginc"
             
             ENDCG
         }
@@ -318,7 +325,7 @@
 
             #pragma vertex vertShadow
             #pragma fragment fragShadow
-            #include "PBRUberDefines.cginc"
+            #include "PBRUberIncludes.cginc"
             ENDCG
         }
         

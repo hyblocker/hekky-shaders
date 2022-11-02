@@ -18,10 +18,16 @@
 #define HEKKY_SAMPLE_TEX2D_SAMPLER(tex, coord, sampler)                             tex.Sample(sampler, coord)
 #define HEKKY_SAMPLE_TEX2D_SAMPLER_LOD(tex, coord, sampler, lod)                    tex.Sample(sampler, coord, lod)
 
+#define HEKKY_SAMPLE_GRAD_TEX2D(tex, coord, dx, dy)                                 tex.SampleGrad(sampler##tex, coord, dx, dy)
+#define HEKKY_SAMPLE_GRAD_TEX2D_SAMPLER(tex, coord, sampler, dx, dy)                tex.SampleGrad(sampler, coord, dx, dy)
+
 #define HEKKY_SAMPLE_TEX2DARR(tex, coord)                                           tex.Sample(sampler##tex, coord)
 #define HEKKY_SAMPLE_TEX2DARR_LOD(tex, coord, lod)                                  tex.Sample(sampler##tex, coord, lod)
 #define HEKKY_SAMPLE_TEX2DARR_SAMPLER(tex, coord, sampler)                          tex.Sample(sampler, coord)
 #define HEKKY_SAMPLE_TEX2DARR_SAMPLER_LOD(tex, coord, sampler, lod)                 tex.Sample(sampler, coord, lod)
+
+#define HEKKY_SAMPLE_GRAD_TEX2DARR(tex, coord, dx, dy)                              tex.SampleGrad(sampler##tex, coord, dx, dy)
+#define HEKKY_SAMPLE_GRAD_TEX2DARR_SAMPLER(tex, coord, sampler, dx, dy)             tex.SampleGrad(sampler, coord, dx, dy)
 
 #define HEKKY_DECLARE_TEX3D(tex)                                                    Texture3D tex; SamplerState sampler##tex
 #define HEKKY_DECLARE_TEX3D_NOSAMPLER(tex)                                          Texture3D tex

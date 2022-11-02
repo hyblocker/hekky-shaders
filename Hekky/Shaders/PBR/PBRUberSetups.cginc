@@ -2,27 +2,29 @@
 
 #define HEKKY_PBR_UBER_SETUPS
 
-#define MATERIAL_SETUP(x) MaterialData x = MaterialSetup(i);
+#define MATERIAL_SETUP(x, s) MaterialData x = MaterialSetup(i, s);
 
-MaterialData MaterialSetup(const v2f i)
+MaterialData MaterialSetup(const v2f i, const ShadingData shadingData)
 {
     MaterialData data;
 
-    float4 albedo = HEKKY_SAMPLE_TEX2D(_MainTex, i.uv.xy);
+    float2 inputUV = handlePom(i.uv.xy, shadingData);
+
+    float4 albedo = HEKKY_SAMPLE_TEX2D(_MainTex, inputUV);
     data.baseColor = albedo.rgb * _Color * 0.8039216f;
     data.alpha = albedo.a * _Color.a;
 
     // Default tangent normal
     #ifdef _NORMALMAP
-    data.normal = UnpackScaleNormal(HEKKY_SAMPLE_TEX2D_SAMPLER(_BumpMap, i.uv.xy, sampler_MainTex), _BumpScale);
+    data.normal = UnpackScaleNormal(HEKKY_SAMPLE_TEX2D_SAMPLER(_BumpMap, inputUV, sampler_MainTex), _BumpScale);
     #else
         data.normal = half3(0,0, _BumpScale);
     #endif
 
     // TODO: Fetch metalness, either from MetalTex.r or MetallicPackedTex[MetalChannel]
     // Probably should have some #define for sampling from either a normal texture or a packed texture
-    data.metallic = _Metallic * HEKKY_SAMPLE_TEX2D_SAMPLER(_MetallicGlossMap, i.uv.xy, sampler_MainTex).r;
-    data.roughness = _Glossiness * HEKKY_SAMPLE_TEX2D_SAMPLER(_SpecGlossMap, i.uv.xy, sampler_MainTex).r;
+    data.metallic = _Metallic * HEKKY_SAMPLE_TEX2D_SAMPLER(_MetallicGlossMap, inputUV, sampler_MainTex).r;
+    data.roughness = _Glossiness * HEKKY_SAMPLE_TEX2D_SAMPLER(_SpecGlossMap, inputUV, sampler_MainTex).r;
     data.roughness = (_InvertGlossiness - 1) * -data.roughness + _InvertGlossiness -_InvertGlossiness * data.roughness;
     data.reflectance = 0.5;
 
@@ -30,8 +32,8 @@ MaterialData MaterialSetup(const v2f i)
 
     // Aniso
     // TODO: Move to sampling
-    // float4 anisoMap = HEKKY_SAMPLE_TEX2D(_AnisoMap, i.uv.xy);
-    float4 anisoMap = SampleTexture2DEdgePreserving( TEXTURE2D_PARAM( _AnisoMap, sampler_MainTex ), i.uv.xy, _AnisoMap_TexelSize );
+    // float4 anisoMap = HEKKY_SAMPLE_TEX2D(_AnisoMap, inputUV);
+    float4 anisoMap = SampleTexture2DEdgePreserving( TEXTURE2D_PARAM( _AnisoMap, sampler_MainTex ), inputUV, _AnisoMap_TexelSize );
     
     data.aniso = anisoMap.r * _AnisoStrength;
     data.anisoAngle = anisoMap.g + _AnisoAngleOffset;
@@ -41,12 +43,12 @@ MaterialData MaterialSetup(const v2f i)
     #if SUBSURFACE_SCATTERING
 
     data.subsurface.color = _SSSColor;
-    data.subsurface.thickness = HEKKY_SAMPLE_TEX2D_SAMPLER(_SSSMap, i.uv.xy, sampler_MainTex).r * _SSSVisibility;
+    data.subsurface.thickness = HEKKY_SAMPLE_TEX2D_SAMPLER(_SSSMap, inputUV, sampler_MainTex).r * _SSSVisibility;
     data.subsurface.intensity = _SSSIntensity;
 
     #endif
     
-    data.emission.color = _EmissionColor.rgb * HEKKY_SAMPLE_TEX2D_SAMPLER(_EmissionMap, i.uv.xy, sampler_MainTex);
+    data.emission.color = _EmissionColor.rgb * HEKKY_SAMPLE_TEX2D_SAMPLER(_EmissionMap, inputUV, sampler_MainTex);
     data.emission.intensity = _EmissionIntensity;
 
     #if defined(_AUDIOLINK)
@@ -62,13 +64,13 @@ MaterialData MaterialSetup(const v2f i)
     
     #endif
     
-    data.ambientOcclusion = Occlusion(i.uv.xy);
+    data.ambientOcclusion = Occlusion(inputUV);
 
     return data;
 }
 
 #if !SHADOW_CASTER
-#define INIT_SHADING_DATA(x, frontFace) ShadingData x = SetupShadingData(i, frontFace);
+#define INIT_SHADING_DATA(x) ShadingData x = SetupShadingData(i);
 
 // Unpacking the world position
 #if UNITY_REQUIRE_FRAG_WORLDPOS
@@ -83,15 +85,13 @@ MaterialData MaterialSetup(const v2f i)
     #define IN_WORLDPOS_FWDADD(i) half3(0,0,0)
 #endif
 
-ShadingData SetupShadingData(const v2f i, const bool isFrontFace)
+ShadingData SetupShadingData(const v2f i)
 {
     ShadingData shadingData = (ShadingData) 0;
 
-    float normalSign = isFrontFace ? 1 : -1;
-
-    shadingData.geometricTangent        = normalSign * i.tangentToWorldAndPackedData[0].xyz;
-    shadingData.binormal                = normalSign * i.tangentToWorldAndPackedData[1].xyz;
-    shadingData.geometricNormal         = normalSign * i.tangentToWorldAndPackedData[2].xyz;
+    shadingData.geometricTangent        = i.tangentToWorldAndPackedData[0].xyz;
+    shadingData.binormal                = i.tangentToWorldAndPackedData[1].xyz;
+    shadingData.geometricNormal         = i.tangentToWorldAndPackedData[2].xyz;
 
     #if UNITY_TANGENT_ORTHONORMALIZE
         // Taken from unity standard shader, this excerpt is licensed under MIT
@@ -155,9 +155,11 @@ ShadingData SetupShadingData(const v2f i, const bool isFrontFace)
     return shadingData;
 }
 
-void prepareMaterial(const MaterialData material, inout ShadingData shading)
+void prepareMaterial(const MaterialData material, inout ShadingData shading, const bool isFrontFace)
 {
+    float normalSign = isFrontFace ? 1 : -1;
     shading.normal = normalize(mul(shading.tangentToWorld, material.normal));
+    shading.normal *= normalSign;
 
     UNITY_BRANCH
     if (_SpecularMode == 1 && abs(material.aniso) > 0.1)

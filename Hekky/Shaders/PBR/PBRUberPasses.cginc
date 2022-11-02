@@ -59,15 +59,14 @@ fixed4 fragBase(v2f i, bool frontFace : SV_IsFrontFace) : SV_Target
 {
     UNITY_APPLY_DITHER_CROSSFADE(i.pos.xy);
 
-    // Extract shader params into a data structure
-    MATERIAL_SETUP(material)
-    
     UNITY_SETUP_INSTANCE_ID(i);
     UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-    INIT_SHADING_DATA(shadingData, frontFace);
+    // Extract shader params into a data structure
+    INIT_SHADING_DATA(shadingData);
+    MATERIAL_SETUP(material, shadingData)
     
-    prepareMaterial(material, shadingData);
+    prepareMaterial(material, shadingData, frontFace);
     if (_Mode == 1) {
         clip(material.alpha - _AlphaClip);
     }
@@ -154,15 +153,14 @@ fixed4 fragAdd(v2f i, bool frontFace : SV_IsFrontFace) : SV_Target
     {
         UNITY_APPLY_DITHER_CROSSFADE(i.pos.xy);
 
-        // Extract shader params into a data structure
-        MATERIAL_SETUP(material)
-    
         UNITY_SETUP_INSTANCE_ID(i);
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-        INIT_SHADING_DATA(shadingData, frontFace);
+        // Extract shader params into a data structure
+        INIT_SHADING_DATA(shadingData);
+        MATERIAL_SETUP(material, shadingData)
         
-        prepareMaterial(material, shadingData);
+        prepareMaterial(material, shadingData, frontFace);
         if (_Mode == 1) {
             clip(material.alpha - _AlphaClip);
         }
@@ -248,15 +246,14 @@ fixed4 fragOutline(v2f i, bool frontFace : SV_IsFrontFace) : SV_Target
     {
         UNITY_APPLY_DITHER_CROSSFADE(i.pos.xy);
 
-        // Extract shader params into a data structure
-        MATERIAL_SETUP(material)
-    
         UNITY_SETUP_INSTANCE_ID(i);
         UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
 
-        INIT_SHADING_DATA(shadingData, frontFace);
+        // Extract shader params into a data structure
+        INIT_SHADING_DATA(shadingData);
+        MATERIAL_SETUP(material, shadingData)
 
-        prepareMaterial(material, shadingData);
+        prepareMaterial(material, shadingData, frontFace);
         if (_Mode == 1) {
             clip(material.alpha - _AlphaClip);
         }

@@ -33,6 +33,7 @@
 #include "PBRUberLightingLTCGI.cginc"
 #include "PBRUberLighting.cginc"
 #include "PBRUberPassStructures.cginc"
+#include "PBRUberPOM.cginc"
 #include "PBRUberSetups.cginc"
 
 // Outline only

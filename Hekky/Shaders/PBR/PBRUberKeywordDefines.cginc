@@ -68,6 +68,9 @@
 
 #define SUBSURFACE_SCATTERING (defined(_SUBSURFACE_SCATTERING))
 
+#define PARALLAX_OCCLUSION_MAPPING (defined(_PARALLAXMAP))
+#define POM_CLIPPING (defined(_POM_CLIPPING))
+
 #define SSR (defined(_SSR_ENABLED))
 
 /*

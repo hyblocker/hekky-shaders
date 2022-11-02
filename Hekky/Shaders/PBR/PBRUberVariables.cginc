@@ -37,6 +37,11 @@ float _EmissionIntensity;
 float _OcclusionStrength;
 HEKKY_DECLARE_TEX2D_NOSAMPLER(_OcclusionMap);
 
+#if PARALLAX_OCCLUSION_MAPPING
+    float _Parallax;
+    HEKKY_DECLARE_TEX2D_NOSAMPLER(_ParallaxMap);
+#endif
+
 // Lighting
 int _LightingMode = 0; // 0 => Realistic ; 1 => Toon ; 2 => Unlit
 int _LightingShadows = 0; // 0 => Off ; 1 => On
