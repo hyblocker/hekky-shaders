@@ -197,8 +197,10 @@
 
             [Toggle(_LTCGI)] _LTCGI ("LTCGI; requireLTCGI", Int) = 0
             [Toggle(_AUDIOLINK)] _AudioLink ("AudioLink; requireAudioLink", Int) = 0
-            
+
             [NonModifiableTextureData][NoScaleOffset][HideInInspector] _DFG("DFG", 2D) = "white" {}
+
+            [NonModifiableTextureData][NoScaleOffset][HideInInspector] _BlueNoise("Blue Noise", 2D) = "black" {}
 
         _FoldoutExternalModulesEnd("__; endFoldout", Float) = 0.0
         

@@ -6,8 +6,10 @@ ShaderImporter:
   - _MainTex: {instanceID: 0}
   - _MetallicGlossMap: {instanceID: 0}
   - _SpecGlossMap: {instanceID: 0}
+  - _ParallaxMap: {instanceID: 0}
   - _BumpMap: {instanceID: 0}
   - _AnisoMap: {instanceID: 0}
+  - _SSSMap: {instanceID: 0}
   - _EmissionMap: {instanceID: 0}
   - _MatcapTex: {instanceID: 0}
   - _MatcapMask: {instanceID: 0}
@@ -17,6 +19,7 @@ ShaderImporter:
   - _RNM2: {instanceID: 0}
   nonModifiableTextures:
   - _DFG: {fileID: 2800000, guid: d3d38ef6596422f4e9cbfe19f7ba0773, type: 3}
+  - _BlueNoise: {fileID: 2800000, guid: 40eaeb31448115149ad93e0437fd5241, type: 3}
   userData: 
   assetBundleName: 
   assetBundleVariant: 
