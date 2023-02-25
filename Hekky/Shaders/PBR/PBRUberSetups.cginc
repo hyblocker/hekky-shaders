@@ -64,7 +64,7 @@ MaterialData MaterialSetup(const v2f i, const ShadingData shadingData)
     
     #endif
     
-    data.ambientOcclusion = Occlusion(inputUV);
+    data.ambientOcclusion = Occlusion(inputUV, sampler_MainTex);
 
     return data;
 }
@@ -116,7 +116,8 @@ ShadingData SetupShadingData(const v2f i)
     shadingData.normal = shadingData.geometricNormal;
     shadingData.tangent = shadingData.geometricTangent;
     shadingData.position = float3(i.tangentToWorldAndPackedData[0].w, i.tangentToWorldAndPackedData[1].w, i.tangentToWorldAndPackedData[2].w);
-    shadingData.view = -normalizePerPixelNormal(i.eyeVec);
+    shadingData.view = -normalize(i.eyeVec);
+    shadingData.viewDistance = length(i.eyeVec);
     // shadingData.reflected = reflect(-shadingData.view, shadingData.normal);
 
     fixed atten  = UNITY_SHADOW_ATTENUATION(i, shadingData.position);
@@ -149,7 +150,7 @@ ShadingData SetupShadingData(const v2f i)
         matcapUV.y = remap( 0, 1, _MatcapBorder, 1.f - _MatcapBorder, matcapUV.y );
         shadingData.matcapColor = HEKKY_SAMPLE_TEX2D(_MatcapTex, matcapUV).rgb * _MatcapColor;
         
-        shadingData.matcapBlend = HEKKY_SAMPLE_TEX2D_SAMPLER(_MatcapMask, i.uv, sampler_MainTex).r * _DoMatcap;
+        shadingData.matcapBlend = HEKKY_SAMPLE_TEX2D_SAMPLER(_MatcapMask, i.uv, sampler_MatcapTex).r * _DoMatcap;
     }
     
     return shadingData;

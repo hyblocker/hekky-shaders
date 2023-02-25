@@ -37,9 +37,9 @@ inline float computeSpecularAO(const float NdotV, const float AO, const float ro
     return SpecularAO_Lagarde(NdotV, AO, roughness);
 }
 
-inline float Occlusion(const float2 uv)
+inline float Occlusion(const float2 uv, SamplerState samplerState)
 {
-    const half occlusion = HEKKY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, uv, sampler_MainTex);
+    const half occlusion = HEKKY_SAMPLE_TEX2D_SAMPLER(_OcclusionMap, uv, samplerState);
     return LerpOneTo(occlusion, _OcclusionStrength);
 }
 

@@ -5,7 +5,7 @@
         // ==================== CORE ====================
         
         [HideInInspector]_Manifest("__;title('Hekky PBR Uber');docsURL('https://docs.hyblocker.dev/en/shaders/hekky-pbr/reference')", Float) = 0
-        [HideInInspector]_Version("__;version(1.6);", Float) = 1
+        [HideInInspector]_Version("__;version(1.7);", Float) = 1
         
         _Header("__;doHeader;spacing;spacing;", Float) = 0
         _MiscView("__;doTextureFixCollection;", Float) = 0
@@ -82,6 +82,7 @@
             
                 _Specular("Specular", Range(0.0, 1.0)) = 0
                 _SpecularTint("Specular Tint", Color) = (1,1,1,1)
+                _BakedSpecularTint("Baked Specular Tint", Color) = (1,1,1,1)
         
                 _FoldoutAdvancedBegin("Advanced; beginFoldout", Float) = 0.0
                     [ToggleUI]_LightmapSpecular("Baked specular", Float) = 1.0
@@ -228,6 +229,7 @@
 
         GrabPass
         {
+            Name "Grabpass"
             Tags { "LightMode" = "Always" }
             "_GrabTexture"
         }
@@ -355,5 +357,6 @@
         }
     }
     
+    Fallback "Standard"
     CustomEditor "Hekky.HekkyDynamicEditorGUI"
 }

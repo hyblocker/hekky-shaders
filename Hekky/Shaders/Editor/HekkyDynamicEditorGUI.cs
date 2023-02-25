@@ -1062,6 +1062,7 @@ namespace Hekky {
                     material.SetFloat("_SrcBlend", ( float ) UnityEngine.Rendering.BlendMode.One);
                     material.SetFloat("_DstBlend", ( float ) UnityEngine.Rendering.BlendMode.Zero);
                     material.SetFloat("_ZWrite", 1.0f);
+                    material.SetFloat("_AlphaCoverageMode", 0.0f);
                     material.DisableKeyword("_ALPHATEST_ON");
                     material.DisableKeyword("_ALPHABLEND_ON");
                     material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
@@ -1074,6 +1075,7 @@ namespace Hekky {
                     material.SetFloat("_SrcBlend", ( float ) UnityEngine.Rendering.BlendMode.One);
                     material.SetFloat("_DstBlend", ( float ) UnityEngine.Rendering.BlendMode.Zero);
                     material.SetFloat("_ZWrite", 1.0f);
+                    material.SetFloat("_AlphaCoverageMode", 1.0f);
                     material.EnableKeyword("_ALPHATEST_ON");
                     material.DisableKeyword("_ALPHABLEND_ON");
                     material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
@@ -1086,6 +1088,7 @@ namespace Hekky {
                     material.SetFloat("_SrcBlend", ( float ) UnityEngine.Rendering.BlendMode.SrcAlpha);
                     material.SetFloat("_DstBlend", ( float ) UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                     material.SetFloat("_ZWrite", 0.0f);
+                    material.SetFloat("_AlphaCoverageMode", 0.0f);
                     material.DisableKeyword("_ALPHATEST_ON");
                     material.EnableKeyword("_ALPHABLEND_ON");
                     material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
@@ -1098,6 +1101,7 @@ namespace Hekky {
                     material.SetFloat("_SrcBlend", ( float ) UnityEngine.Rendering.BlendMode.One);
                     material.SetFloat("_DstBlend", ( float ) UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
                     material.SetFloat("_ZWrite", 0.0f);
+                    material.SetFloat("_AlphaCoverageMode", 0.0f);
                     material.DisableKeyword("_ALPHATEST_ON");
                     material.DisableKeyword("_ALPHABLEND_ON");
                     material.EnableKeyword("_ALPHAPREMULTIPLY_ON");

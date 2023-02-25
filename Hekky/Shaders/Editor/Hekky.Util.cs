@@ -11,6 +11,15 @@ namespace Hekky {
         }
 
         /// <summary>
+        /// Loads a shader with the specified name
+        /// </summary>
+        public static Shader FetchShaderByName(string name)
+        {
+            var shaderGuid = AssetDatabase.FindAssets($"{name} t:shader")[0];
+            return AssetDatabase.LoadAssetAtPath<Shader>(AssetDatabase.GUIDToAssetPath(shaderGuid));
+        }
+        
+        /// <summary>
         /// Loads a compute shader with the specified name
         /// </summary>
         public static ComputeShader FetchComputeShaderByName(string name)

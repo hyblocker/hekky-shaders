@@ -38,8 +38,9 @@ struct ShadingData
     float3 geometricNormal;     // Normal
     float3 geometricTangent;    // Tangent
     float3 view;                // View Direction
+    float viewDistance;         // Distance between camera and surface
     float3 reflected;           // Reflected Direction
-    float NdotV;                  // N dot V
+    float NdotV;                // N dot V
 
     float2 normalizedViewportCoord; // For grab pass stuff
 

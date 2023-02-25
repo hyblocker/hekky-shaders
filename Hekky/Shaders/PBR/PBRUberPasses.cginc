@@ -22,7 +22,7 @@ v2f vertBase(appdata v)
         #endif
     #endif
     o.pos = UnityObjectToClipPos(v.vertex);
-    o.eyeVec.xyz = normalizePerVertexNormal(posWorld.xyz - _WorldSpaceCameraPos);
+    o.eyeVec.xyz = posWorld.xyz - _WorldSpaceCameraPos;
     
     // Transform UVs
     o.uv.xy = TRANSFORM_TEX(v.uv, _MainTex);
@@ -67,6 +67,7 @@ fixed4 fragBase(v2f i, bool frontFace : SV_IsFrontFace) : SV_Target
     MATERIAL_SETUP(material, shadingData)
     
     prepareMaterial(material, shadingData, frontFace);
+
     if (_Mode == 1) {
         clip(material.alpha - _AlphaClip);
     }
@@ -111,7 +112,7 @@ v2f vertAdd(appdata v)
         #endif
     #endif
     o.pos = UnityObjectToClipPos(v.vertex);
-    o.eyeVec.xyz = normalizePerVertexNormal(posWorld.xyz - _WorldSpaceCameraPos);
+    o.eyeVec.xyz = posWorld.xyz - _WorldSpaceCameraPos;
     
     // Transform UVs
     o.uv.xy = TRANSFORM_TEX(v.uv, _MainTex);
@@ -199,7 +200,7 @@ v2f vertOutline(appdata v)
         #endif
     #endif
     o.pos = UnityObjectToClipPos(v.vertex);
-    o.eyeVec.xyz = normalizePerVertexNormal(posWorld.xyz - _WorldSpaceCameraPos);
+    o.eyeVec.xyz = posWorld.xyz - _WorldSpaceCameraPos;
     
     // Transform UVs
     o.uv.xy = TRANSFORM_TEX(v.uv, _MainTex);

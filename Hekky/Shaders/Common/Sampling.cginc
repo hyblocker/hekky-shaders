@@ -18,8 +18,10 @@
 #define HEKKY_SAMPLE_TEX2D_SAMPLER(tex, coord, sampler)                             tex.Sample(sampler, coord)
 #define HEKKY_SAMPLE_TEX2D_SAMPLER_LOD(tex, coord, sampler, lod)                    tex.Sample(sampler, coord, lod)
 
-#define HEKKY_SAMPLE_GRAD_TEX2D(tex, coord, dx, dy)                                 tex.SampleGrad(sampler##tex, coord, dx, dy)
-#define HEKKY_SAMPLE_GRAD_TEX2D_SAMPLER(tex, coord, sampler, dx, dy)                tex.SampleGrad(sampler, coord, dx, dy)
+#define HEKKY_SAMPLE_TEX2D_LEVEL(tex, coord, mip)                                   tex.SampleLevel(sampler##tex, coord, mip)
+#define HEKKY_SAMPLE_TEX2D_SAMPLER_LEVEL(tex, coord, sampler, mip)                  tex.SampleLevel(sampler, coord, mip)
+#define HEKKY_SAMPLE_TEX2D_GRAD(tex, coord, dx, dy)                                 tex.SampleGrad(sampler##tex, coord, dx, dy)
+#define HEKKY_SAMPLE_TEX2D_SAMPLER_GRAD(tex, coord, sampler, dx, dy)                tex.SampleGrad(sampler, coord, dx, dy)
 
 #define HEKKY_SAMPLE_TEX2DARR(tex, coord)                                           tex.Sample(sampler##tex, coord)
 #define HEKKY_SAMPLE_TEX2DARR_LOD(tex, coord, lod)                                  tex.Sample(sampler##tex, coord, lod)

@@ -491,7 +491,7 @@ float3 evaluateIBL(const ShadingData shading, const MaterialData material, const
     
     #endif
     
-    Fr *= singleBounceAO(specularAO) * pixel.energyConservation;
+    Fr *= singleBounceAO(specularAO) * pixel.energyConservation * _BakedSpecularTint;
 
     float3 diffuseIrridiance = unityIrradiance;
 

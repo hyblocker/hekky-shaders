@@ -1,11 +1,6 @@
 ﻿#if UNITY_EDITOR
 
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using UnityEngine;
 using UnityEditor;
 using UnityEditor.PackageManager.Requests;
@@ -187,7 +182,7 @@ namespace Hekky {
             if ( candidatePostProcessingVolumes == null ) {
                 var postVolume = new GameObject();
                 postVolume.transform.name = "Post Processing";
-                postVolume.transform.parent = sceneCam.transform;
+                postVolume.transform.parent = sceneCam.transform.parent;
                 postVolume.transform.localPosition = Vector3.zero;
                 postVolume.transform.localRotation = Quaternion.identity;
                 postVolume.transform.localScale = Vector3.one;

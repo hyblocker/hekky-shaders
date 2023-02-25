@@ -9,11 +9,23 @@ inline float2 handlePom(float2 inputUV, const ShadingData shadingData) {
 	const float dx = ddx(inputUV);
 	const float dy = ddy(inputUV);
 
-	const int MAX_ITERATIONS = 128;
+	const int MAX_ITERATIONS = 32;
 
-	const float MIN_SAMPLES = 8.f;
-	const float MAX_SAMPLES = 16.f;
-	float layerCount = lerp(MAX_SAMPLES, MIN_SAMPLES, saturate(dot(shadingData.view, shadingData.geometricNormal)));
+	// Range of acceptable step counts
+	const float MIN_SAMPLES = 1.f;
+	const float MAX_SAMPLES = 32.f;
+	
+	// Optimisation 1.
+	// Use more layers if the eye is parallel to the surface, and less if the eye is perpendicular to the surface 
+	float angleBias = 1.f - saturate(dot(shadingData.view, shadingData.geometricNormal));
+	
+	// Optimisation 2.
+	// Use more layers if the eye is closer to the point being shaded, and fallback to normal mapping from afar.
+	float distBias = shadingData.viewDistance;
+	distBias = saturate(distBias * 0.09f); // Tune distance attenuation
+	distBias = 1.f - pow(distBias, 0.45f); // Adjust fall-off, and invert
+	
+	float layerCount = lerp(MIN_SAMPLES, MAX_SAMPLES, angleBias * distBias);
 	float layerDepth = 1.f / layerCount;
 
 	float3 viewTangentSpace = mul(shadingData.view, shadingData.tangentToWorld).xyz;
@@ -22,13 +34,13 @@ inline float2 handlePom(float2 inputUV, const ShadingData shadingData) {
 
 	float depth = 0.f;
 	float2 uvCoord = inputUV;
-	float height = (1.f - HEKKY_SAMPLE_GRAD_TEX2D_SAMPLER(_ParallaxMap, uvCoord, sampler_MainTex, dx, dy).r);
+	float height = (1.f - HEKKY_SAMPLE_TEX2D_SAMPLER_GRAD(_ParallaxMap, uvCoord, sampler_MainTex, dx, dy).r);
 
 	int iter = 0;
 	UNITY_LOOP
 	while (depth < height) {
 		uvCoord -= deltaCoords;
-		height = (1.f - HEKKY_SAMPLE_GRAD_TEX2D_SAMPLER(_ParallaxMap, uvCoord, sampler_MainTex, dx, dy).r);
+		height = (1.f - HEKKY_SAMPLE_TEX2D_SAMPLER_GRAD(_ParallaxMap, uvCoord, sampler_MainTex, dx, dy).r);
 		depth += layerDepth;
 		if (++iter > MAX_ITERATIONS) break;
 	}
@@ -36,7 +48,7 @@ inline float2 handlePom(float2 inputUV, const ShadingData shadingData) {
 	float2 originalCoords = uvCoord + deltaCoords;
 
 	float furthestDepth = height - depth;
-	float originalDepth = (1.f - HEKKY_SAMPLE_GRAD_TEX2D_SAMPLER(_ParallaxMap, originalCoords, sampler_MainTex, dx, dy).r) - depth + layerDepth;
+	float originalDepth = (1.f - HEKKY_SAMPLE_TEX2D_SAMPLER_GRAD(_ParallaxMap, originalCoords, sampler_MainTex, dx, dy).r) - depth + layerDepth;
 
 	float sampleWeight = furthestDepth / (furthestDepth - originalDepth);
 	inputUV = originalCoords * sampleWeight + uvCoord * (1.f - sampleWeight);
