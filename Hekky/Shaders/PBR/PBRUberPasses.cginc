@@ -12,6 +12,7 @@ v2f vertBase(appdata v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     
     float4 posWorld = mul(unity_ObjectToWorld, v.vertex);
+    
     #if UNITY_REQUIRE_FRAG_WORLDPOS
         #if UNITY_PACK_WORLDPOS_WITH_TANGENT
             o.tangentToWorldAndPackedData[0].w = posWorld.x;
@@ -21,8 +22,21 @@ v2f vertBase(appdata v)
             o.posWorld = posWorld.xyz;
         #endif
     #endif
-    o.pos = UnityObjectToClipPos(v.vertex);
     o.eyeVec.xyz = posWorld.xyz - _WorldSpaceCameraPos;
+    
+    #if _INFINITEFAR_ON
+        // This is a hack to force the far plane to infinity regardless of what the user does. This effictively is a hack since unity does not
+        // support infinite perspective matrices since it ends up dividing by zero and crashing
+        float4x4 INF_PERSPECTIVE = UNITY_MATRIX_P;
+        if (INF_PERSPECTIVE._m20 == 0 && INF_PERSPECTIVE._m21 == 0) {
+            // Regular perspective projection matrix
+            INF_PERSPECTIVE._m22 = 0.f;
+            INF_PERSPECTIVE._m23 = _ProjectionParams.y;
+        };
+        o.pos = mul(INF_PERSPECTIVE, mul(UNITY_MATRIX_V, mul(unity_ObjectToWorld, float4(v.vertex.xyz, 1.0))));
+    #else
+        o.pos = UnityObjectToClipPos(v.vertex);
+    #endif
     
     // Transform UVs
     o.uv.xy = TRANSFORM_TEX(v.uv, _MainTex);
@@ -100,7 +114,7 @@ v2f vertAdd(appdata v)
     UNITY_INITIALIZE_OUTPUT(v2f, o);
     UNITY_TRANSFER_INSTANCE_ID(v, o);
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-    
+
     float4 posWorld = mul(unity_ObjectToWorld, v.vertex);
     #if UNITY_REQUIRE_FRAG_WORLDPOS
         #if UNITY_PACK_WORLDPOS_WITH_TANGENT
@@ -111,8 +125,21 @@ v2f vertAdd(appdata v)
             o.posWorld = posWorld.xyz;
         #endif
     #endif
-    o.pos = UnityObjectToClipPos(v.vertex);
     o.eyeVec.xyz = posWorld.xyz - _WorldSpaceCameraPos;
+    
+    #if _INFINITEFAR_ON
+        // This is a hack to force the far plane to infinity regardless of what the user does. This effictively is a hack since unity does not
+        // support infinite perspective matrices since it ends up dividing by zero and crashing
+        float4x4 INF_PERSPECTIVE = UNITY_MATRIX_P;
+        if (INF_PERSPECTIVE._m20 == 0 && INF_PERSPECTIVE._m21 == 0) {
+            // Regular perspective projection matrix
+            INF_PERSPECTIVE._m22 = 0.f;
+            INF_PERSPECTIVE._m23 = _ProjectionParams.y;
+        };
+        o.pos = mul(INF_PERSPECTIVE, mul(UNITY_MATRIX_V, mul(unity_ObjectToWorld, float4(v.vertex.xyz, 1.0))));
+    #else
+        o.pos = UnityObjectToClipPos(v.vertex);
+    #endif
     
     // Transform UVs
     o.uv.xy = TRANSFORM_TEX(v.uv, _MainTex);
@@ -190,6 +217,7 @@ v2f vertOutline(appdata v)
     UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
     
     float4 posWorld = mul(unity_ObjectToWorld, v.vertex);
+
     #if UNITY_REQUIRE_FRAG_WORLDPOS
         #if UNITY_PACK_WORLDPOS_WITH_TANGENT
             o.tangentToWorldAndPackedData[0].w = posWorld.x;
@@ -199,8 +227,22 @@ v2f vertOutline(appdata v)
             o.posWorld = posWorld.xyz;
         #endif
     #endif
-    o.pos = UnityObjectToClipPos(v.vertex);
     o.eyeVec.xyz = posWorld.xyz - _WorldSpaceCameraPos;
+    
+    #if _INFINITEFAR_ON
+        // This is a hack to force the far plane to infinity regardless of what the user does. This effictively is a hack since unity does not
+        // support infinite perspective matrices since it ends up dividing by zero and crashing
+        float4x4 INF_PERSPECTIVE = UNITY_MATRIX_P;
+        if (INF_PERSPECTIVE._m20 == 0 && INF_PERSPECTIVE._m21 == 0) {
+            // Regular perspective projection matrix
+            INF_PERSPECTIVE._m22 = 0.f;
+            INF_PERSPECTIVE._m23 = _ProjectionParams.y;
+        };
+        o.pos = mul(INF_PERSPECTIVE, mul(UNITY_MATRIX_V, mul(unity_ObjectToWorld, float4(v.vertex.xyz, 1.0))));
+    #else
+        o.pos = UnityObjectToClipPos(v.vertex);
+    #endif
+    
     
     // Transform UVs
     o.uv.xy = TRANSFORM_TEX(v.uv, _MainTex);

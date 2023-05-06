@@ -9,8 +9,23 @@ inline float sqr(const float val)
     return val * val;
 }
 
+inline float3 F_Adobe(in float3 f0, in float f90, in float u, in float t)
+{
+    // Naty Hoffman 2023, "Generalization of Adobe’s Fresnel Model"
+    const float u_max = 1.f / 7.f;
+    
+    const float u1 = 1.f - u;
+    const float u2 = u1 * u1;
+    
+    const float3 a = (f0 + (f90 - f0) * pow(1.f - u_max, u)) * (1.f - t) / (u_max * pow(1.f - u_max, 6));
+
+    return max(f0 + (f90 - f0) * u2 * u2 * u1 - a * pow(u1, 6), 0.f);
+}
+
 inline float3 F_Schlick(in float u)
 {
+    // f0 = 0,0,0
+    // f90 = 1
     float m = clamp(1 - u, 0, 1);
     float m2 = m * m;
     return m2 * m2 * m; // pow(m,5)
@@ -18,10 +33,14 @@ inline float3 F_Schlick(in float u)
 
 inline float3 F_Schlick(in float3 f0, in float f90, in float u)
 {
+    #ifdef _DOADOBEFRESNEL_ON
+    return F_Adobe(f0, f90, u, _AdobeFresnelTint);
+    #else
     // Schlick 1994, "An Inexpensive BRDF Model for Physically-Based Rendering"
     const float u1 = 1.f - u;
     const float u2 = u1 * u1;
     return f0 + (f90 - f0) * u2 * u2 * u1;
+    #endif
 }
 
 inline float V_SmithGGXCorrelated(const float NdotL, const float NdotV, const float alphaG)

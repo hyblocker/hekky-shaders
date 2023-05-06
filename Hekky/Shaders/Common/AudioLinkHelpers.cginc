@@ -3,7 +3,7 @@
 
 // Check if AL has been imported
 #if !defined(ALPASS_DFT) && (defined(_AUDIOLINK))
-    #include "Assets/AudioLink/Shaders/AudioLink.cginc"
+    #include "Packages/AudioLink/Runtime/Shaders/AudioLink.cginc"
 #endif
 
 // AudioLink Debug variables

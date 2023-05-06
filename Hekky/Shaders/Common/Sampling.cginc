@@ -1,6 +1,8 @@
 ﻿#ifndef HEKKY_COMMON_SAMPLING
 #define HEKKY_COMMON_SAMPLING
 
+#include "Noise.cginc"
+
 #ifndef TEXTURE2D_ARGS
 #define TEXTURE2D_ARGS(textureName, samplerName) Texture2D textureName, SamplerState samplerName
 #define TEXTURE2D_PARAM(textureName, samplerName) textureName, samplerName
@@ -207,6 +209,133 @@ inline float4 SampleDynamicLightmapDirBicubic(float2 uv)
     #endif
 }
 
-#endif
+#endif // NO_LIGHTMAP
+
+// Thanks bgolus https://bgolus.medium.com/normal-mapping-for-a-triplanar-shader-10bf39dca05a#0f18
+inline float4 sampleTexture2DArrayTriplanarFast(Texture2DArray textures, SamplerState theSampler, float3 position, float3 normal, int index, float4 texScaleTranslate)
+{
+    // calculate triplanar blend
+    half3 triBlend = pow(abs(normal), 4);
+    triBlend /= max(dot(triBlend, half3(1,1,1)), 0.0001);
+
+    // calculate triplanar uvs
+    // applying texture scale and offset values ala TRANSFORM_TEX macro
+    float2 uvX = position.zy * texScaleTranslate.xy + texScaleTranslate.zw;
+    float2 uvY = position.xz * texScaleTranslate.xy + texScaleTranslate.zw;
+    float2 uvZ = position.xy * texScaleTranslate.xy + texScaleTranslate.zw;
+
+    // minor optimization of sign(), prevents return value of 0
+    const half3 axisSign = normal < 0 ? -1 : 1;
+                
+    // flip UVs horizontally to correct for back side projection
+    uvX.x *= axisSign.x;
+    uvY.x *= axisSign.y;
+    uvZ.x *= -axisSign.z;
+              
+    // albedo textures
+    const fixed4 colX = HEKKY_SAMPLE_TEX2DARR_SAMPLER(textures, float3(uvX, index), theSampler);
+    const fixed4 colY = HEKKY_SAMPLE_TEX2DARR_SAMPLER(textures, float3(uvY, index), theSampler);
+    const fixed4 colZ = HEKKY_SAMPLE_TEX2DARR_SAMPLER(textures, float3(uvZ, index), theSampler);
+    const fixed4 col = colX * triBlend.x + colY * triBlend.y + colZ * triBlend.z;
+
+    return col;
+}
+
+inline float3 sampleTexture2DArrayTriplanarNormalsFast(Texture2DArray textures, SamplerState theSampler, float3 position, float3 normal, int index, float4 texScaleTranslate, float normalScale)
+{
+    // calculate triplanar blend
+    half3 triBlend = pow(abs(normal), 4);
+    triBlend /= max(dot(triBlend, half3(1,1,1)), 0.0001);
+
+    // calculate triplanar uvs
+    // applying texture scale and offset values ala TRANSFORM_TEX macro
+    float2 uvX = position.zy * texScaleTranslate.xy + texScaleTranslate.zw;
+    float2 uvY = position.xz * texScaleTranslate.xy + texScaleTranslate.zw;
+    float2 uvZ = position.xy * texScaleTranslate.xy + texScaleTranslate.zw;
+
+    // minor optimization of sign(), prevents return value of 0
+    const half3 axisSign = normal < 0 ? -1 : 1;
+                
+    // flip UVs horizontally to correct for back side projection
+    uvX.x *= axisSign.x;
+    uvY.x *= axisSign.y;
+    uvZ.x *= -axisSign.z;
+    
+    // tangent space normal maps
+    half3 tNormalX = UnpackScaleNormal(HEKKY_SAMPLE_TEX2DARR_SAMPLER(textures, float3(uvX, index), theSampler), normalScale);
+    half3 tNormalY = UnpackScaleNormal(HEKKY_SAMPLE_TEX2DARR_SAMPLER(textures, float3(uvY, index), theSampler), normalScale);
+    half3 tNormalZ = UnpackScaleNormal(HEKKY_SAMPLE_TEX2DARR_SAMPLER(textures, float3(uvZ, index), theSampler), normalScale);
+    
+    // flip normal maps' x axis to account for flipped UVs
+    tNormalX.x *= axisSign.x;
+    tNormalY.x *= axisSign.y;
+    tNormalZ.x *= -axisSign.z;
+  
+    // swizzle world normals to match tangent space and apply Whiteout normal blend
+    tNormalX = half3(tNormalX.xy + normal.zy, tNormalX.z * normal.x);
+    tNormalY = half3(tNormalY.xy + normal.xz, tNormalY.z * normal.y);
+    tNormalZ = half3(tNormalZ.xy + normal.xy, tNormalZ.z * normal.z);
+
+    // swizzle tangent normals to match world normal and blend together
+    const half3 worldNormal = normalize(
+        tNormalX.zyx * triBlend.x +
+        tNormalY.xzy * triBlend.y +
+        tNormalZ.xyz * triBlend.z
+    );
+
+    return worldNormal;
+}
+
+float4 sampleTexture2dStochastic(Texture2D tex, SamplerState theSampler, float2 uv) {
+    // Thanks Mochie
+    // skew the uv to create triangular grid
+    float2 skewUV = mul(float2x2 (1.0, 0.0, -0.57735027, 1.15470054), uv * 3.464);
+
+    // vertices on the triangular grid
+    int2 vertID = int2(floor(skewUV));
+
+    // barycentric coordinates of uv position
+    float3 temp = float3(frac(skewUV), 0);
+    temp.z = 1.0 - temp.x - temp.y;
+    
+    // each vertex on the grid gets an according weight value
+    int2 vertA, vertB, vertC;
+    float weightA, weightB, weightC;
+
+    // determine which triangle we're in
+    if (temp.z > 0.0){
+        weightA = temp.z;
+        weightB = temp.y;
+        weightC = temp.x;
+        vertA = vertID;
+        vertB = vertID + int2(0, 1);
+        vertC = vertID + int2(1, 0);
+    }
+    else {
+        weightA = -temp.z;
+        weightB = 1.0 - temp.y;
+        weightC = 1.0 - temp.x;
+        vertA = vertID + int2(1, 1);
+        vertB = vertID + int2(1, 0);
+        vertC = vertID + int2(0, 1);
+    }    
+
+    // get derivatives to avoid triangular artifacts
+    float2 dx = ddx(uv);
+    float2 dy = ddy(uv);
+
+    // offset uvs using magic numbers
+    float2 randomA = uv + frac(sin(fmod(float2(dot(vertA, float2(127.1, 311.7)), dot(vertA, float2(269.5, 183.3))), 3.14159)) * 43758.5453);
+    float2 randomB = uv + frac(sin(fmod(float2(dot(vertB, float2(127.1, 311.7)), dot(vertB, float2(269.5, 183.3))), 3.14159)) * 43758.5453);
+    float2 randomC = uv + frac(sin(fmod(float2(dot(vertC, float2(127.1, 311.7)), dot(vertC, float2(269.5, 183.3))), 3.14159)) * 43758.5453);
+    
+    // get texture samples
+    float4 sampleA = HEKKY_SAMPLE_TEX2D_SAMPLER_GRAD(tex, randomA, theSampler, dx, dy);
+    float4 sampleB = HEKKY_SAMPLE_TEX2D_SAMPLER_GRAD(tex, randomB, theSampler, dx, dy);
+    float4 sampleC = HEKKY_SAMPLE_TEX2D_SAMPLER_GRAD(tex, randomC, theSampler, dx, dy);
+    
+    // blend samples with weights    
+    return sampleA * weightA + sampleB * weightB + sampleC * weightC;
+}
 
 #endif // HEKKY_COMMON_SAMPLING

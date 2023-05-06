@@ -51,6 +51,7 @@ int _SpecularMode = 0; // 0 => Isotropic ; 1 => Anisotropic
 int _LightmapSpecular = 0; // Baked lighting specular
 float _LightmapSpecularMaxSmoothness = 0; // Baked lighting max specular smoothness
 float _Specular;
+float _AdobeFresnelTint;
 float4 _BakedSpecularTint;
 float4 _SpecularTint;
 float _AnisoStrength; // aniso XY

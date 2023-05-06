@@ -5,7 +5,7 @@
         // ==================== CORE ====================
         
         [HideInInspector]_Manifest("__;title('Hekky PBR Uber');docsURL('https://docs.hyblocker.dev/en/shaders/hekky-pbr/reference')", Float) = 0
-        [HideInInspector]_Version("__;version(1.7);", Float) = 1
+        [HideInInspector]_Version("__;version(1.8);", Float) = 1
         
         _Header("__;doHeader;spacing;spacing;", Float) = 0
         _MiscView("__;doTextureFixCollection;", Float) = 0
@@ -83,6 +83,9 @@
                 _Specular("Specular", Range(0.0, 1.0)) = 0
                 _SpecularTint("Specular Tint", Color) = (1,1,1,1)
                 _BakedSpecularTint("Baked Specular Tint", Color) = (1,1,1,1)
+        
+                [Toggle]_DoAdobeFresnel("Adobe Fresnel", Float) = 0
+                _AdobeFresnelTint("Tint; hideIfNot(_DoAdobeFresnel, 1)", Range(0,1)) = 0
         
                 _FoldoutAdvancedBegin("Advanced; beginFoldout", Float) = 0.0
                     [ToggleUI]_LightmapSpecular("Baked specular", Float) = 1.0
@@ -202,6 +205,8 @@
             _LTCGI_Intensity ("LTCGI Intensity; slider(X, 0, 5, Diffuse Intensity); slider(Y, 0, 5, Specular Intensity); hideIfNot(_LTCGI); requireLTCGI", Vector) = (1,1,1,0)
         _FoldoutLTCGIConfigEnd("__; endFoldout", Float) = 0.0
         
+        [Toggle]_InfiniteFar("Infinite Depth", Float) = 0
+        
         // Blending state
         [HideInInspector] _Mode ("__mode", Float) = 0.0
         [HideInInspector] _SrcBlend ("__src", Float) = 1.0
@@ -259,13 +264,15 @@
             #pragma shader_feature_local _POM_CLIPPING
             #pragma shader_feature_local _SSR_ENABLED
             #pragma shader_feature_local _REFLECTIONSFORCEDMODE_DEFAULT _REFLECTIONSFORCEDMODE_SPHERICAL_PROJECTION _REFLECTIONSFORCEDMODE_BOX_PROJECTION
+            #pragma shader_feature_local _DOADOBEFRESNEL_ON
+            #pragma shader_feature_local _INFINITEFAR_ON
             
             #pragma multi_compile_fwdbase
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
             // Uncomment the following line to enable dithering LOD crossfade. Note: there are more in the file to uncomment for other passes.
             // #pragma multi_compile _ LOD_FADE_CROSSFADE
-            
+
             #pragma vertex vertBase
             #pragma fragment fragBase
             #include "PBRUberIncludes.cginc"
@@ -292,6 +299,8 @@
             #pragma shader_feature_local _SPECGLOSSMAP
             #pragma shader_feature_local _PARALLAXMAP
             #pragma shader_feature_local _POM_CLIPPING
+            #pragma shader_feature_local _DOADOBEFRESNEL_ON
+            #pragma shader_feature_local _INFINITEFAR_ON
             
             #pragma multi_compile_fwdadd_fullshadows
             #pragma multi_compile_fog
@@ -321,6 +330,7 @@
             #pragma shader_feature_local _METALLICGLOSSMAP
             #pragma shader_feature_local _SPECGLOSSMAP
             #pragma shader_feature_local _PARALLAXMAP
+            #pragma shader_feature_local _INFINITEFAR_ON
             
             #pragma multi_compile_shadowcaster
             #pragma multi_compile_instancing

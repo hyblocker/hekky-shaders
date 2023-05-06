@@ -1,6 +1,7 @@
 #ifndef HEKKY_LIGHTING
 #define HEKKY_LIGHTING
 
+#include "UnityShadowLibrary.cginc"
 #include "../Common/Sampling.cginc"
 
 // Some functions in this file are taken from Standard Shader CGIncludes. Those are licensed under the MIT license
